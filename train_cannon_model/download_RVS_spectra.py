@@ -15,7 +15,6 @@ job = Gaia.launch_job_async(query)
 results = job.get_results()
 print(f'Table size (rows): {len(results)}')
 
-
 # split data up into chunks
 def chunks(lst, n):
     ""
@@ -60,8 +59,8 @@ flux_error_list = []
 for datalink in datalink_all:
     for i in range(len(datalink[dl_key])):
         product = datalink[dl_key][i]
-        #items    = [item for item in product.iter_fields_and_params()]
-        source_id_list.append(product.get_field_by_id("source_id").value)
+        # store the gaia desgination number
+        source_id_list.append(product.get_field_by_id("source_id").value) 
         prod_tab = product.to_table()
         flux_list.append(np.array(prod_tab['flux']))
         flux_error_list.append(np.array(prod_tab['flux_error']))

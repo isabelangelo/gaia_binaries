@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import astroquery
 from astroquery.vizier import Vizier
 
-
 ########### load data ################################################
 # GALAH DR3 main catalog
 GALAH_star_labels = Table.read('./GALAH_data_tables/GALAH_DR3_main_allstar_v2.fits', format='fits').to_pandas()
@@ -27,10 +26,10 @@ GALAH_stars = pd.merge(GALAH_star_labels, GALAH_xmatch, on='sobject_id')
 # remove rows with invalid Gaia designations
 GALAH_stars = GALAH_stars[GALAH_stars.designation!=' ']
 
-
 # save relevant parameters, write to file
 star_columns_to_save=['sobject_id', 'designation', 'dr3_source_id_x', 'teff', 'e_teff',
-                'logg', 'e_logg', 'fe_h', 'e_fe_h', 'vbroad', 'e_vbroad', 'v_jk']
+                'logg', 'e_logg', 'fe_h', 'e_fe_h', 'alpha_fe', 'e_alpha_fe', 
+                'vbroad', 'e_vbroad','v_jk']
 GALAH_stars_to_save = GALAH_stars[star_columns_to_save].rename(
 	columns={
     "sobject_id": "galah_sobject_id", 
@@ -42,8 +41,10 @@ GALAH_stars_to_save = GALAH_stars[star_columns_to_save].rename(
     "e_logg":"galah_elogg",
     "fe_h": "galah_feh", 
     "e_fe_h": "galah_efeh",
+    "alpha_fe": "galah_alpha_fe",
+    "e_alpha_fe": "galah_ealpha_fe",
     "vbroad":"galah_vbroad",
-    "e_vbroad": "galah_evbroad", 
+    "e_vbroad": "galah_evbroad",
     "v_jk": "galah_vjk"
     })
 

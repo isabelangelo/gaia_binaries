@@ -41,7 +41,7 @@ test_set_df.to_csv('cannon_test_set.csv')
 print('training set saved to cannon_training_set.csv')
 print('training set saved to cannon_test_set.csv')
 
-# write training set + test set flux, ivar to file
+# write training set flux, ivar to file
 training_set_flux = np.array([GALAH_star_flux[designation[9:]].to_numpy() for designation in training_set_df.gaia_designation])
 training_set_sigma = np.array([GALAH_star_flux_err[designation[9:]].to_numpy() for designation in training_set_df.gaia_designation])
 fits.HDUList([fits.PrimaryHDU(training_set_flux)]).writeto('training_set_flux.fits')
@@ -49,12 +49,14 @@ fits.HDUList([fits.PrimaryHDU(training_set_sigma)]).writeto('training_set_sigma.
 print('training set fluxes saved to training_set_flux.fits')
 print('training set sigma saved to training_set_sigma.fits')
 
+# write test set flux, ivar to file
+test_set_flux = np.array([GALAH_star_flux[designation[9:]].to_numpy() for designation in test_set_df.gaia_designation])
+test_set_sigma = np.array([GALAH_star_flux_err[designation[9:]].to_numpy() for designation in test_set_df.gaia_designation])
+fits.HDUList([fits.PrimaryHDU(test_set_flux)]).writeto('test_set_flux.fits')
+fits.HDUList([fits.PrimaryHDU(test_set_sigma)]).writeto('test_set_sigma.fits')
+print('training set fluxes saved to test_set_flux.fits')
+print('training set sigma saved to test_set_sigma.fits')
 
-# question: do I need to re-run download_RVS_spectra?
-# or does this code load the training + test fluxes based on gaia designation
-# (I think it's the second one)
-# so I can train it and then in the meantime I can run that code again...
-# it looks like it loads everything for the training set! so I just need to re-run this.
 
 
 
