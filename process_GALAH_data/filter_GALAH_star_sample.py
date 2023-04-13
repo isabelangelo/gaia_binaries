@@ -5,9 +5,10 @@ import numpy as np
 training_set_labels = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha_fe', 'galah_vbroad']
 
 # load GALAH + Gaia data for GALAH star catalog
-stars_gaia_no_snr = pd.read_csv('./GALAH_data_tables/GALAH_stars-result.csv')
-stars_gaia_snr = pd.read_csv('./GALAH_data_tables/GALAH_stars_SNR-result.csv')
-stars_gaia = pd.merge(stars_gaia_no_snr, stars_gaia_snr, on='designation')
+stars_gaia = pd.read_csv('./GALAH_data_tables/GALAH_stars-result.csv')
+# stars_gaia_no_snr = pd.read_csv('./GALAH_data_tables/GALAH_stars-result.csv')
+# stars_gaia_snr = pd.read_csv('./GALAH_data_tables/GALAH_stars_SNR-result.csv')
+# stars_gaia = pd.merge(stars_gaia_no_snr, stars_gaia_snr, on='designation')
 
 stars_galah = pd.read_csv('./GALAH_data_tables/GALAH_star_catalog.csv')
 stars = pd.merge(stars_galah, stars_gaia, 

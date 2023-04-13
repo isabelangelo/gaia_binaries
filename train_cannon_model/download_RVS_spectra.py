@@ -68,8 +68,8 @@ for datalink in datalink_all:
 flux_dict = dict(zip(source_id_list, flux_list))
 flux_err_dict = dict(zip(source_id_list, flux_error_list))
 
-flux_filename = 'flux_data.csv'
-flux_err_filename = 'flux_err_data.csv'
+flux_filename = './data_files/flux_data.csv'
+flux_err_filename = './data_files/flux_err_data.csv'
 pd.DataFrame(flux_dict).to_csv(flux_filename, index=False)
 pd.DataFrame(flux_err_dict).to_csv(flux_err_filename, index=False)
 print('flux data saved to {}'.format(flux_filename))

@@ -23,8 +23,8 @@ GALAH_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in GALAH_
 ########### save GALAH target catalog designations ##################
 # find GALAH stars in Gaia xmatch table
 GALAH_stars = pd.merge(GALAH_star_labels, GALAH_xmatch, on='sobject_id')
-# remove rows with invalid Gaia designations
-GALAH_stars = GALAH_stars[GALAH_stars.designation!=' ']
+# remove rows with invalid source IDs
+GALAH_stars = GALAH_stars.dropna(subset='dr3_source_id_x')
 
 # save relevant parameters, write to file
 star_columns_to_save=['sobject_id', 'designation', 'dr3_source_id_x', 'teff', 'e_teff',
@@ -61,7 +61,7 @@ binary_columns_to_save = ['spectID', 'designation', 'dr3_source_id', 'Teff1-50',
 GALAH_binaries_to_save = GALAH_binaries[binary_columns_to_save].rename(
 	columns={
 	'spectID':'galah_sobject_id',
-	'designation':'gaia_designation',
+    "designation": "gaia_designation",
 	'dr3_source_id':'dr3_source_id',
 	'Teff1-50':'galah_teff1',
 	'logg1-50':'galah_logg1',
