@@ -29,17 +29,21 @@ print('training set saved to ./data_files/cannon_training_set.csv')
 print('training set saved to ./data_files/cannon_test_set.csv')
 
 
+# problem: the fluxes are appended to the array based on training_source_ids, which is random
+# but the training set by the original dataframe that they're loaded from
+# maybe this would be different if I loaded from training_set_df.source_id
+
 # write training set flux, ivar to file
-training_set_flux = np.array([GALAH_star_flux[str(source_id)].to_numpy() for source_id in training_source_ids])
-training_set_sigma = np.array([GALAH_star_flux_err[str(source_id)].to_numpy() for source_id in training_source_ids])
+training_set_flux = np.array([GALAH_star_flux[str(source_id)].to_numpy() for source_id in training_set_df.source_id])
+training_set_sigma = np.array([GALAH_star_flux_err[str(source_id)].to_numpy() for source_id in training_set_df.source_id])
 fits.HDUList([fits.PrimaryHDU(training_set_flux)]).writeto('./data_files/training_set_flux.fits', overwrite=True)
 fits.HDUList([fits.PrimaryHDU(training_set_sigma)]).writeto('./data_files/training_set_sigma.fits', overwrite=True)
 print('training set fluxes saved to ./data_files/training_set_flux.fits')
 print('training set sigma saved to ./data_files/training_set_sigma.fits')
 
 # write test set flux, ivar to file
-test_set_flux = np.array([GALAH_star_flux[str(source_id)].to_numpy() for source_id in test_source_ids])
-test_set_sigma = np.array([GALAH_star_flux_err[str(source_id)].to_numpy() for source_id in test_source_ids])
+test_set_flux = np.array([GALAH_star_flux[str(source_id)].to_numpy() for source_id in test_set_df.source_id])
+test_set_sigma = np.array([GALAH_star_flux_err[str(source_id)].to_numpy() for source_id in test_set_df.source_id])
 fits.HDUList([fits.PrimaryHDU(test_set_flux)]).writeto('./data_files/test_set_flux.fits', overwrite=True)
 fits.HDUList([fits.PrimaryHDU(test_set_sigma)]).writeto('./data_files/test_set_sigma.fits', overwrite=True)
 print('training set fluxes saved to ./data_files/test_set_flux.fits')
@@ -65,7 +69,7 @@ training_set_source_ids = training_set_df.source_id.to_numpy()
 test_set_source_ids = training_set_df.source_id.to_numpy()
 training_and_test_set_source_ids = np.concatenate((training_set_source_ids, test_source_ids))
 
-if False in (flux_source_ids==filtered_star_source_ids):
+if False in (np.sort(flux_source_ids)==np.sort(filtered_star_source_ids)):
 	print('WARNING: flux csv source IDs and filtered star source IDs dont match')
 elif False in (np.sort(flux_source_ids)==np.sort(training_and_test_set_source_ids)):
 	print('WARNING: flux csv source IDs and training/test set source IDs dont match')

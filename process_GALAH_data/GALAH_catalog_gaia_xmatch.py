@@ -22,19 +22,15 @@ GALAH_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in GALAH_
 
 ########### save GALAH target catalog designations ##################
 # find GALAH stars in Gaia xmatch table
-GALAH_stars = pd.merge(GALAH_star_labels, GALAH_xmatch, on='sobject_id')
-# remove rows with invalid source IDs
-GALAH_stars = GALAH_stars.dropna(subset='dr3_source_id_x')
+GALAH_star_label_cols = ['sobject_id', 'teff', 'e_teff', 'logg', 'e_logg', 'fe_h', 'e_fe_h',\
+                             'alpha_fe', 'e_alpha_fe','vbroad', 'e_vbroad','v_jk']
+GALAH_xmatch_cols = ['sobject_id', 'designation']
+GALAH_stars = pd.merge(GALAH_xmatch[GALAH_xmatch_cols], GALAH_star_labels[GALAH_star_label_cols], on='sobject_id')
+GALAH_stars = GALAH_stars[GALAH_stars.designation!=' ']
 
 # save relevant parameters, write to file
-star_columns_to_save=['sobject_id', 'designation', 'dr3_source_id_x', 'teff', 'e_teff',
-                'logg', 'e_logg', 'fe_h', 'e_fe_h', 'alpha_fe', 'e_alpha_fe', 
-                'vbroad', 'e_vbroad','v_jk']
-GALAH_stars_to_save = GALAH_stars[star_columns_to_save].rename(
-	columns={
-    "sobject_id": "galah_sobject_id", 
-    "designation": "gaia_designation",
-    "dr3_source_id_x":"gaia_dr3_source_id",
+GALAH_stars = GALAH_stars.rename(
+    columns={
     "teff": "galah_teff", 
     "e_teff": "galah_eteff",
     "logg":"galah_logg",
@@ -50,9 +46,11 @@ GALAH_stars_to_save = GALAH_stars[star_columns_to_save].rename(
 
 # save to file
 GALAH_stars_filename = './GALAH_data_tables/GALAH_star_catalog.csv'
-GALAH_stars_to_save.to_csv(GALAH_stars_filename, index=False)
+GALAH_stars.to_csv(GALAH_stars_filename, index=False)
 print('GALAH stars + Gaia designations saved to {}'.format(GALAH_stars_filename))
 
+
+########### NOTE: this needs to be re-written, but I'm trying to focus on the single stars at the moment ########
 ########### save GALAH binary catalog designations ###################
 GALAH_binaries = pd.merge(GALAH_binary_catalog, GALAH_xmatch, left_on='spectID', right_on='sobject_id')
 binary_columns_to_save = ['spectID', 'designation', 'dr3_source_id', 'Teff1-50',

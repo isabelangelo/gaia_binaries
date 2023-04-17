@@ -6,18 +6,13 @@ training_set_labels = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha_fe'
 
 # load GALAH + Gaia data for GALAH star catalog
 stars_gaia = pd.read_csv('./GALAH_data_tables/GALAH_stars-result.csv')
-# stars_gaia_no_snr = pd.read_csv('./GALAH_data_tables/GALAH_stars-result.csv')
-# stars_gaia_snr = pd.read_csv('./GALAH_data_tables/GALAH_stars_SNR-result.csv')
-# stars_gaia = pd.merge(stars_gaia_no_snr, stars_gaia_snr, on='designation')
 
 stars_galah = pd.read_csv('./GALAH_data_tables/GALAH_star_catalog.csv')
-stars = pd.merge(stars_galah, stars_gaia, 
-	left_on='gaia_designation', 
-	right_on='designation', 
-	validate='one_to_one')
+stars = pd.merge(stars_galah, stars_gaia, on=['sobject_id','designation'], validate='one_to_one')
 
 # filters to remove stars with label uncertainties >2*median GALAH uncertainty
 print(len(stars), 'GALAH stars from Gaia xmatch')
+stars_precise_labels = stars
 emax_teff = 2*np.nanmedian(stars.galah_eteff)
 emax_logg = 2*np.nanmedian(stars.galah_elogg)
 emax_feh = 2*np.nanmedian(stars.galah_efeh)
@@ -39,7 +34,7 @@ binary_galah_ids = pd.read_csv('./GALAH_data_tables/GALAH_binary_catalog.csv').g
 binary_idx_to_remove = []
 for i in range(len(stars_filt)):
     row = stars_filt.iloc[i]
-    if row.galah_sobject_id in binary_galah_ids:
+    if row.sobject_id in binary_galah_ids:
         binary_idx_to_remove.append(i)
 stars_filt_binaries_removed = stars_filt.drop(stars_filt.index[binary_idx_to_remove])
 print(len(stars_filt_binaries_removed), ' remaining after removing binaries from Traven 2020')

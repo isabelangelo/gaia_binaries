@@ -6,10 +6,10 @@ import pandas as pd
 Gaia.login()
 
 # get full list of objects with ADQL
-query = f"SELECT dr3.designation, dr3.source_id \
+query = f"SELECT dr3.designation, galah.sobject_id, dr3.source_id \
 FROM user_iangelo.galah_stars_filtered as galah \
 JOIN gaiadr3.gaia_source as dr3 \
-    ON dr3.designation = galah.gaia_designation"
+    ON dr3.source_id = galah.source_id"
     
 job = Gaia.launch_job_async(query)
 results = job.get_results()
