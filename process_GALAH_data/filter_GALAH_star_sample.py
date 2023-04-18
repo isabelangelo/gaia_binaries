@@ -26,7 +26,7 @@ print(len(stars_precise_labels), ' remaining after removing stars with label unc
 # filters to remove logg<4, select ones with RVS spectra, 
 # and require non_single_star=0 for single star sample
 stars_filt = stars_precise_labels.query('galah_logg>4 & non_single_star==0 & has_rvs==True & rvs_spec_sig_to_noise>50')
-print(len(stars_filt), ' remaining after requiring logg>4, non_single_star=1, has_rvs=True, SNR>50')
+print(len(stars_filt), ' remaining after requiring logg>4, non_single_star=0, has_rvs=True, SNR>50')
 
 # remove known binaries from training set
 # note: using binary galah IDs from original vizier file yielded identical results
