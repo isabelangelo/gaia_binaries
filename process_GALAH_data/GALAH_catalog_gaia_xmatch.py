@@ -56,27 +56,29 @@ print('GALAH stars + Gaia designations saved to {}'.format(GALAH_stars_filename)
 
 
 ########### save GALAH binary catalog designations ###################
-# GALAH_binaries = pd.merge(GALAH_xmatch[GALAH_xmatch_cols], GALAH_binary_labels, 
-#                 left_on='sobject_id', right_on = 'spectID', validate='one_to_one')
+GALAH_binaries = pd.merge(GALAH_xmatch[GALAH_xmatch_cols], GALAH_binary_labels, 
+                 left_on='sobject_id', right_on = 'spectID', validate='one_to_one')
+# remove duplicate rows based on designation,
+# keep one observation (sobject_id) per unique gaia designation
+GALAH_binaries = GALAH_binaries.drop_duplicates(subset='designation', keep='first')
+GALAH_binaries = GALAH_binaries[GALAH_binaries.designation!=' ']
 
-# # remove DR3 designations that map to multiple GALAH sobject_id
-# GALAH_binaries = GALAH_binaries.drop_duplicates(subset=['designation'], keep=False)
-# GALAH_binaries_to_save = GALAH_binaries.rename(
-#     columns={
-#     'spectID':'sobject_id',
-#     'Teff1-50':'galah_teff1',
-#     'logg1-50':'galah_logg1',
-#     '__Fe_H_-50':'galah_feh',
-#     'vbroad1-50':'galah_vbroad1',
-#     'Teff2-50':'galah_teff2',
-#     'logg2-50':'galah_logg2',
-#     'vbroad2-50':'galah_vbroad2',
-#     'RV1-50':'galah_rv1',
-#     'RV2-50':'galah_rv2'
-#     })
-# GALAH_binaries_filename = './GALAH_data_tables/GALAH_binary_catalog.csv'
-# GALAH_binaries_to_save.to_csv(GALAH_binaries_filename, index=False)
-# print('GALAH binaries + Gaia designations saved to {}'.format(GALAH_binaries_filename))
+GALAH_binaries_to_save = GALAH_binaries.rename(
+    columns={
+    'spectID':'sobject_id',
+    'Teff1-50':'galah_teff1',
+    'logg1-50':'galah_logg1',
+    '__Fe_H_-50':'galah_feh',
+    'vbroad1-50':'galah_vbroad1',
+    'Teff2-50':'galah_teff2',
+    'logg2-50':'galah_logg2',
+    'vbroad2-50':'galah_vbroad2',
+    'RV1-50':'galah_rv1',
+    'RV2-50':'galah_rv2'
+    })
+GALAH_binaries_filename = './GALAH_data_tables/GALAH_binary_catalog.csv'
+GALAH_binaries_to_save.to_csv(GALAH_binaries_filename, index=False)
+print('GALAH binaries + Gaia designations saved to {}'.format(GALAH_binaries_filename))
 
 # add tests that verify that the binary xmatch is working
 # number of unique sobject_id and designation should match in the final GALAH_binaries
