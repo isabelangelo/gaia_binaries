@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
 
-# load GALAH binary catalog from Gaia query
-binaries = pd.read_csv('./GALAH_data_tables/GALAH_binaries-result.csv')
+# load GALAH + Gaia data for GALAH binary catalog
+binaries_gaia = pd.read_csv('./GALAH_data_tables/GALAH_binaries-result.csv')
+binaries_galah = pd.read_csv('./GALAH_data_tables/GALAH_binary_catalog.csv')
+binaries = pd.merge(binaries_galah, binaries_gaia, on=['sobject_id','designation'], validate='one_to_one')
 print(len(binaries), 'GALAH binaries from Traven et al. 2020 found in Gaia xmatch')
+
 # require RVS spectrum
 binaries_rvs = binaries.query('has_rvs==True')
 print(len(binaries_rvs), ' have RVS spectra')

@@ -30,7 +30,7 @@ print(len(stars_filt), ' remaining after requiring logg>4, non_single_star=0, ha
 
 # remove known binaries from training set
 # note: using binary galah IDs from original vizier file yielded identical results
-binary_galah_ids = pd.read_csv('./GALAH_data_tables/GALAH_binary_catalog.csv').galah_sobject_id.to_numpy()
+binary_galah_ids = pd.read_csv('./GALAH_data_tables/GALAH_binary_catalog.csv').sobject_id.to_numpy()
 binary_idx_to_remove = []
 for i in range(len(stars_filt)):
     row = stars_filt.iloc[i]
