@@ -22,8 +22,8 @@ def plot_fit(source_id, flux_data_df, flux_err_data_df):
     
     plt.figure(figsize=(15,10))
     plt.subplot(211);plt.title('Gaia DR3 source ID '+source_id)
-    plt.plot(w, s, lw=3, color='grey')
-    plt.plot(w, fit, color='salmon', lw=3)
+    plt.errorbar(w, s, yerr=serr, lw=3, color='grey', ecolor='lightgrey', zorder=0)
+    plt.plot(w, fit, color='salmon', lw=2)
     plt.ylabel('flux')
     plt.subplot(212)
     plt.plot(w, s-fit, lw=3, color='grey')
