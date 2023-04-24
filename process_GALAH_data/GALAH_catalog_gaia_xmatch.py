@@ -56,8 +56,12 @@ print('GALAH stars + Gaia designations saved to {}'.format(GALAH_stars_filename)
 
 
 ########### save GALAH binary catalog designations ###################
-GALAH_binaries = pd.merge(GALAH_xmatch[GALAH_xmatch_cols], GALAH_binary_labels, 
-                 left_on='sobject_id', right_on = 'spectID', validate='one_to_one')
+# merge GALAH binaries with GALAH star catalog
+# to get labels for binaries when treated as single stars
+GALAH_binaries_catalog = pd.merge(GALAH_binary_labels, GALAH_star_labels[GALAH_star_label_cols], 
+    left_on='spectID', right_on='sobject_id', validate='one_to_one')
+GALAH_binaries = pd.merge(GALAH_binaries_catalog, GALAH_xmatch[GALAH_xmatch_cols], on='sobject_id', validate='one_to_one')
+
 # remove duplicate rows based on designation,
 # keep one observation (sobject_id) per unique gaia designation
 GALAH_binaries = GALAH_binaries.drop_duplicates(subset='designation', keep='first')
@@ -68,7 +72,7 @@ GALAH_binaries_to_save = GALAH_binaries.rename(
     'spectID':'sobject_id',
     'Teff1-50':'galah_teff1',
     'logg1-50':'galah_logg1',
-    '__Fe_H_-50':'galah_feh',
+    '__Fe_H_-50':'galah_feh12',
     'vbroad1-50':'galah_vbroad1',
     'Teff2-50':'galah_teff2',
     'logg2-50':'galah_logg2',
