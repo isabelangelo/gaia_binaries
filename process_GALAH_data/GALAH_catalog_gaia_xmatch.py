@@ -69,7 +69,7 @@ GALAH_binaries = GALAH_binaries[GALAH_binaries.designation!=' ']
 
 GALAH_binaries_to_save = GALAH_binaries.rename(
     columns={
-    'spectID':'sobject_id',
+    # Traven 2020 columns
     'Teff1-50':'galah_teff1',
     'logg1-50':'galah_logg1',
     '__Fe_H_-50':'galah_feh12',
@@ -78,7 +78,19 @@ GALAH_binaries_to_save = GALAH_binaries.rename(
     'logg2-50':'galah_logg2',
     'vbroad2-50':'galah_vbroad2',
     'RV1-50':'galah_rv1',
-    'RV2-50':'galah_rv2'
+    'RV2-50':'galah_rv2',
+    # GALAH star catalog columns
+    "teff": "galah_teff", 
+    "e_teff": "galah_eteff",
+    "logg":"galah_logg",
+    "e_logg":"galah_elogg",
+    "fe_h": "galah_feh", 
+    "e_fe_h": "galah_efeh",
+    "alpha_fe": "galah_alpha_fe",
+    "e_alpha_fe": "galah_ealpha_fe",
+    "vbroad":"galah_vbroad",
+    "e_vbroad": "galah_evbroad",
+    "v_jk": "galah_vjk"
     })
 GALAH_binaries_filename = './GALAH_data_tables/GALAH_binary_catalog.csv'
 GALAH_binaries_to_save.to_csv(GALAH_binaries_filename, index=False)
