@@ -17,6 +17,10 @@ Vizier.ROW_LIMIT = -1
 catalogs = Vizier.get_catalogs(catalogs.keys())
 GALAH_binary_labels = catalogs[0].to_pandas()
 
+# following GALAH website best practices for clean star catalog
+GALAH_star_labels_cleaned = GALAH_star_labels.query('(snr_c3_iraf > 30) & (flag_sp == 0) \
+& (flag_fe_h == 0) & (flag_alpha_fe == 0)')
+
 # reformat Gaia designation column
 GALAH_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in GALAH_xmatch['designation']]
 
@@ -29,7 +33,7 @@ GALAH_xmatch_cols = ['sobject_id', 'designation']
 # note: merge on sobject_id based on GALAH website
 # designations matched on multiple sobject IDs are multiple observations of the same object
 # keep observation (sobj_id) per designation (this is the default in drop_duplicates())
-GALAH_stars = pd.merge(GALAH_xmatch[GALAH_xmatch_cols], GALAH_star_labels[GALAH_star_label_cols], on='sobject_id')
+GALAH_stars = pd.merge(GALAH_xmatch[GALAH_xmatch_cols], GALAH_star_labels_cleaned[GALAH_star_label_cols], on='sobject_id')
 GALAH_stars = GALAH_stars.drop_duplicates(subset='designation', keep='first')
 GALAH_stars = GALAH_stars[GALAH_stars.designation!=' '] 
 
@@ -52,7 +56,7 @@ GALAH_stars = GALAH_stars.rename(
 # save to file
 GALAH_stars_filename = './GALAH_data_tables/GALAH_star_catalog.csv'
 GALAH_stars.to_csv(GALAH_stars_filename, index=False)
-print('GALAH stars + Gaia designations saved to {}'.format(GALAH_stars_filename))
+print('{} GALAH stars + Gaia designations saved to {}'.format(len(GALAH_stars), GALAH_stars_filename))
 
 
 ########### save GALAH binary catalog designations ###################
@@ -94,13 +98,7 @@ GALAH_binaries_to_save = GALAH_binaries.rename(
     })
 GALAH_binaries_filename = './GALAH_data_tables/GALAH_binary_catalog.csv'
 GALAH_binaries_to_save.to_csv(GALAH_binaries_filename, index=False)
-print('GALAH binaries + Gaia designations saved to {}'.format(GALAH_binaries_filename))
-
-# add tests that verify that the binary xmatch is working
-# number of unique sobject_id and designation should match in the final GALAH_binaries
-# number of objects in final GALAH_binaries should match rows with count=1 before duplicates dropped
-# len(final GALAH_binaries) + objects wtih count>1 before = len(GALAH_binaries before duplicates dropped)
-# see cell in jupyter notebook scratch_workspace to see how to compute the counts
+print('{} GALAH binaries + Gaia designations saved to {}'.format(len(GALAH_binaries), GALAH_binaries_filename))
 
 
 

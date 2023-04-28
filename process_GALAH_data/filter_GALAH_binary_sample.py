@@ -15,11 +15,11 @@ print(len(binaries_filt), ' after requiring RVS spectrum + logg>4')
 # require non_single_star=1
 binaries_filt_non_single = binaries_filt.query('non_single_star>0')
 print('{}/{} have gaia non_single_star>0'.format(len(binaries_filt_non_single), len(binaries_filt)))
-binaris_filt_highSNR = binaries_filt.query('rvs_spec_sig_to_noise>50')
-print('{}/{} have gaia RVS SNR>50'.format(len(binaris_filt_highSNR), len(binaries_filt)))
+binaries_filt_highSNR = binaries_filt.query('rvs_spec_sig_to_noise>50')
+print('{}/{} have gaia RVS SNR>50'.format(len(binaries_filt_highSNR), len(binaries_filt)))
 
 # write to .csv file
-df_to_save = binaries_filt
+df_to_save = binaries_filt_highSNR
 filtered_sample_filename = './GALAH_data_tables/GALAH_binaries_filtered.csv'
 df_to_save.to_csv(filtered_sample_filename)
 print('saving filtered GALAH binary sample of {} stars to {}'.format(len(df_to_save), filtered_sample_filename))

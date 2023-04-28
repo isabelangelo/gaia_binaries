@@ -37,7 +37,7 @@ model = tc.CannonModel(training_set, normalized_flux, normalized_ivar,
                        vectorizer=vectorizer)
 
 # train model
-model_filename = './cannon_models/galah_labels_5para_highSNR_precise_labels.model'
+model_filename = './cannon_models/galah_labels_5para_highSNR_cleaned.model'
 model.train()
 print('finished training cannon model')
 model.write(model_filename)
