@@ -1,14 +1,13 @@
-
-# to do : add print statements
-
 from astropy.table import Table
+from astropy.io import fits
 import numpy as np
 import pandas as pd
 import astroquery
 from astroquery.vizier import Vizier
+from astroquery.gaia import Gaia
 
 
-########### load data ################################################
+########### load data from catalogs ################################################
 # GALAH DR3 main catalog
 galah_allstar_catalog = Table.read('./data/galah_catalogs/GALAH_DR3_main_allstar_v2.fits', format='fits').to_pandas()
 # GALAH Gaia crossmatch for all spectra 
@@ -21,13 +20,15 @@ catalogs = Vizier.get_catalogs(catalogs.keys())
 galah_binary_catalog = catalogs[0].to_pandas()
 
 # following GALAH website best practices for clean star catalog
+print(len(galah_allstar_catalog), 'GALAH stars in allstar catalog')
 galah_allstar_catalog_cleaned = galah_allstar_catalog.query('(snr_c3_iraf > 30) & (flag_sp == 0) \
 & (flag_fe_h == 0) & (flag_alpha_fe == 0)')
+print(len(galah_allstar_catalog_cleaned), 'remaining after cleaning based on GALAH SNR + quality flags')
 
 # reformat Gaia designation column
 galah_gaia_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in galah_gaia_xmatch['designation']]
 
-########### save GALAH target catalog designations ##################
+########### crossmatch GALAH/gaia and filter sample ##################################
 # find GALAH stars in Gaia xmatch table
 galah_allstar_catalog_cols = ['sobject_id', 'star_id', 'teff', 'e_teff', 'logg', 'e_logg', 'fe_h', 'e_fe_h',\
                              'alpha_fe', 'e_alpha_fe','vbroad', 'e_vbroad','v_jk']
@@ -39,7 +40,8 @@ galah_gaia_xmatch_cols = ['sobject_id', 'designation']
 galah_stars_gaia = pd.merge(galah_gaia_xmatch[galah_gaia_xmatch_cols], 
 	galah_allstar_catalog_cleaned[galah_allstar_catalog_cols], on='sobject_id')
 galah_stars_gaia = galah_stars_gaia.drop_duplicates(subset='designation', keep='first')
-galah_stars_gaia = galah_stars_gaia[galah_stars_gaia.designation!=' '] 
+galah_stars_gaia = galah_stars_gaia[galah_stars_gaia.designation!=' '][:5000]
+print(len(galah_stars_gaia), 'stars with unique gaia designations from GALAH/gaia crossmatch')
 
 # save relevant parameters, write to file
 galah_stars_gaia = galah_stars_gaia.rename(
@@ -60,6 +62,7 @@ galah_stars_gaia = galah_stars_gaia.rename(
 # require training set labels to be finite
 training_set_labels = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', 'galah_vbroad']
 galah_stars_gaia = galah_stars_gaia.dropna(subset=training_set_labels)
+print(len(galah_stars_gaia), 'with finite training set labels')
 
 # filters to remove stars with label uncertainties >2*median GALAH uncertainty
 def emax(colname):
@@ -70,9 +73,10 @@ emax_logg = emax('galah_elogg')
 emax_feh = emax('galah_efeh')
 emax_alpha = emax('galah_ealpha')
 emax_vbroad = emax('galah_evbroad')
-galah_stars_gaia = galah_stars_gaia.query('galah_eteff<@emax_teff & galah_elogg<@emax_logg \
+galah_stars_gaia = galah_stars_gaia.query('galah_teff > 4 & galah_eteff<@emax_teff & galah_elogg<@emax_logg \
             & galah_efeh<@emax_feh & galah_ealpha<@emax_alpha\
             & galah_evbroad<@emax_vbroad')
+print(len(galah_stars_gaia), 'with logg>4, uncertainties < 2x median galah uncertainties')
 
 # remove known binaries from training set
 # note: using binary galah IDs from original vizier file yielded identical results
@@ -83,9 +87,140 @@ for i in range(len(galah_stars_gaia)):
     if row.sobject_id in binary_galah_ids:
         binary_idx_to_remove.append(i)
 galah_stars_gaia = galah_stars_gaia.drop(galah_stars_gaia.index[binary_idx_to_remove])
+print(len(galah_stars_gaia), 'remaining after removing binaries from Traven et al. 2020')
 
-# next I need to run the gaia query to get the spectra
-# where I filter based on gaia parameters
+########### upload to gaia to filter + download RVS spectra ##################################
+# upload table to gaia
+galah_stars_gaia = Table.from_pandas(galah_stars_gaia)
+Gaia.login(user='iangelo', password='@Sugargirl1994')
+# Gaia.upload_table(upload_resource=galah_stars_gaia, table_name='galah_stars_gaia')
+
+# query to filter based on Gaia parameters + download RVS spectra
+query = f"SELECT dr3.designation, galah.sobject_id, dr3.source_id, \
+galah.galah_teff, galah.galah_eteff, galah.galah_logg, galah.galah_elogg, \
+galah.galah_feh, galah.galah_efeh, galah.galah_alpha, galah.galah_ealpha, \
+galah.galah_vbroad, galah.galah_evbroad, dr3.rvs_spec_sig_to_noise, \
+dr3.ra, dr3.dec \
+FROM user_iangelo.galah_stars_gaia as galah \
+JOIN gaiadr3.gaia_source as dr3 \
+	ON dr3.designation = galah.designation \
+WHERE dr3.has_rvs = 'True' \
+AND dr3.rvs_spec_sig_to_noise > 50 \
+AND dr3.non_single_star = 0"
+
+job = Gaia.launch_job_async(query)
+galah_stars_gaia_results = job.get_results().to_pandas()
+print(f'Table size (rows): {len(galah_stars_gaia_results)} after requiring non_single_star=0, has_rvs=True, rvs snr >50')
+
+# split data up into chunks
+def chunks(lst, n):
+    ""
+    "Split an input list into multiple chunks of size =< n"
+    ""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+dl_threshold = 5000               # DataLink server threshold. It is not possible to download products for more than 5000 sources in one single call.
+ids          = galah_stars_gaia_results['source_id']
+ids_chunks   = list(chunks(ids, dl_threshold))
+datalink_all = []
+
+print(f'* Input list contains {len(ids)} source_IDs')
+print(f'* This list is split into {len(ids_chunks)} chunks of <= {dl_threshold} elements each')
+
+
+# download RVS spectra
+retrieval_type = 'RVS'        # Options are: 'EPOCH_PHOTOMETRY', 'MCMC_GSPPHOT', 'MCMC_MSC', 'XP_SAMPLED', 'XP_CONTINUOUS', 'RVS' 
+data_structure = 'COMBINED'   # Options are: 'INDIVIDUAL', 'COMBINED', 'RAW' - but as explained above, we strongly recommend to use COMBINED for massive downloads.
+data_release   = 'Gaia DR3'   # Options are: 'Gaia DR3' (default), 'Gaia DR2'
+dl_key         = f'{retrieval_type}_{data_structure}.xml'
+
+
+ii = 0
+for chunk in ids_chunks:
+    ii = ii + 1
+    print(f'Downloading Chunk #{ii}; N_files = {len(chunk)}')
+    datalink  = Gaia.load_data(ids=chunk, data_release = data_release, 
+                               retrieval_type=retrieval_type, format = 'votable', 
+                               data_structure = data_structure)
+    datalink_all.append(datalink)
+
+
+########### save RVS spectra + corresponding source ids to files ##################################
+print('saving flux + flux errors to .csv files')
+# save RVS spectra to .csv file
+dl_key   = 'RVS_COMBINED.xml'    # Try also with 'XP_SAMPLED_COMBINED.xml'
+source_id_list = []
+flux_list = []
+sigma_list = []
+
+for datalink in datalink_all:
+    for i in range(len(datalink[dl_key])):
+        product = datalink[dl_key][i]
+        # store the gaia desgination number
+        source_id_list.append(product.get_field_by_id("source_id").value) 
+        prod_tab = product.to_table()
+        flux_list.append(np.array(prod_tab['flux']))
+        sigma_list.append(np.array(prod_tab['flux_error']))
+
+flux_df = pd.DataFrame(dict(zip(source_id_list, flux_list)))
+sigma_df = pd.DataFrame(dict(zip(source_id_list, sigma_list)))
+# flux_df_filename = './data/gaia_rvs_dataframes/galah_single_star_flux.csv'
+# sigma_df_filename = './data/gaia_rvs_dataframes/galah_single_star_sigma.csv'
+# flux_df.to_csv(flux_df_filename)
+# sigma_df.to_csv(sigma_df_filename)
+# print('training set saved to {}'.format(flux_df_filename))
+# print('test set saved to {}'.format(sigma_df_fileame))
+
+# split into training + test sets
+np.random.seed(1234)
+print('splitting into training + test sets')
+n_total = len(source_id_list)
+n_training = int(0.8*n_total)
+n_test = n_total - n_training
+training_source_ids = np.random.choice(source_id_list, size=n_training, replace=False)
+test_source_ids = np.array(list((set(source_id_list) - set(training_source_ids))))
+
+# write training + test set labels to .csv files
+training_label_df = galah_stars_gaia_results[galah_stars_gaia_results['source_id'].isin(training_source_ids)]
+test_label_df = galah_stars_gaia_results[galah_stars_gaia_results['source_id'].isin(test_source_ids)]
+training_label_filename = './data/label_dataframes/training_labels.csv'
+test_label_filename = './data/label_dataframes/test_labels.csv'
+training_label_df.to_csv(training_label_filename)
+test_label_df.to_csv(test_label_filename)
+print('training set labels saved to {}'.format(training_label_filename))
+print('test set labels saved to {}'.format(test_label_filename))
+
+# write training + test set flux, sigma to .csv files
+flux_sigma_df_path = './data/gaia_rvs_dataframes/'
+training_flux_df_filename = flux_sigma_df_path + 'training_flux.csv'
+test_flux_df_filename = flux_sigma_df_path + 'test_flux.csv'
+training_sigma_df_filename = flux_sigma_df_path + 'training_sigma.csv'
+test_sigma_df_filename = flux_sigma_df_path + 'test_sigma.csv'
+flux_df[training_source_ids].to_csv(training_flux_df_filename)
+flux_df[test_source_ids].to_csv(test_flux_df_filename)
+sigma_df[training_source_ids].to_csv(training_sigma_df_filename)
+sigma_df[test_source_ids].to_csv(test_sigma_df_filename)
+print('training set flux, sigma dataframe saved to:\n{}\n{}'.format(training_flux_df_filename, training_sigma_df_filename))
+print('test set flux, sigma dataframe saved to:\n{}\n{}'.format(test_flux_df_filename, test_sigma_df_filename))
+
+# write training set flux, ivar to fits files for the cannon
+training_flux_arr = flux_df[training_source_ids].to_numpy().T
+training_sigma_arr = sigma_df[training_source_ids].to_numpy().T
+training_flux_arr_filename = './data/cannon_training_data/training_flux.fits'
+training_sigma_arr_filename = './data/cannon_training_data/training_sigma.fits'
+fits.HDUList([fits.PrimaryHDU(training_flux_arr)]).writeto(training_flux_arr_filename, overwrite=True)
+fits.HDUList([fits.PrimaryHDU(training_sigma_arr)]).writeto(training_sigma_arr_filename, overwrite=True)
+print('training set flux array saved to {}'.format(training_flux_arr_filename))
+print('training set sigma array saved to {}'.format(training_sigma_arr_filename))
+
+# I'll run this quickly with a small number
+# then I'll git commit
+# then I'll uncomment the line that uploads the table to gaia
+# then I'll make sure the tables are not being index/cut
+# then I'll run the full code.
+
+
 
 
 
