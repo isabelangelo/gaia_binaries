@@ -1,3 +1,4 @@
+# NOTE: before running this code, you need to delete galah_stars_gaia table from the gaia archive online
 from astropy.table import Table
 from astropy.io import fits
 import numpy as np
@@ -40,7 +41,7 @@ galah_gaia_xmatch_cols = ['sobject_id', 'designation']
 galah_stars_gaia = pd.merge(galah_gaia_xmatch[galah_gaia_xmatch_cols], 
 	galah_allstar_catalog_cleaned[galah_allstar_catalog_cols], on='sobject_id')
 galah_stars_gaia = galah_stars_gaia.drop_duplicates(subset='designation', keep='first')
-galah_stars_gaia = galah_stars_gaia[galah_stars_gaia.designation!=' '][:5000]
+galah_stars_gaia = galah_stars_gaia[galah_stars_gaia.designation!=' ']
 print(len(galah_stars_gaia), 'stars with unique gaia designations from GALAH/gaia crossmatch')
 
 # save relevant parameters, write to file
@@ -73,7 +74,7 @@ emax_logg = emax('galah_elogg')
 emax_feh = emax('galah_efeh')
 emax_alpha = emax('galah_ealpha')
 emax_vbroad = emax('galah_evbroad')
-galah_stars_gaia = galah_stars_gaia.query('galah_teff > 4 & galah_eteff<@emax_teff & galah_elogg<@emax_logg \
+galah_stars_gaia = galah_stars_gaia.query('galah_logg > 4 & galah_eteff<@emax_teff & galah_elogg<@emax_logg \
             & galah_efeh<@emax_feh & galah_ealpha<@emax_alpha\
             & galah_evbroad<@emax_vbroad')
 print(len(galah_stars_gaia), 'with logg>4, uncertainties < 2x median galah uncertainties')
@@ -93,7 +94,7 @@ print(len(galah_stars_gaia), 'remaining after removing binaries from Traven et a
 # upload table to gaia
 galah_stars_gaia = Table.from_pandas(galah_stars_gaia)
 Gaia.login(user='iangelo', password='@Sugargirl1994')
-# Gaia.upload_table(upload_resource=galah_stars_gaia, table_name='galah_stars_gaia')
+Gaia.upload_table(upload_resource=galah_stars_gaia, table_name='galah_stars_gaia')
 
 # query to filter based on Gaia parameters + download RVS spectra
 query = f"SELECT dr3.designation, galah.sobject_id, dr3.source_id, \
@@ -165,12 +166,6 @@ for datalink in datalink_all:
 
 flux_df = pd.DataFrame(dict(zip(source_id_list, flux_list)))
 sigma_df = pd.DataFrame(dict(zip(source_id_list, sigma_list)))
-# flux_df_filename = './data/gaia_rvs_dataframes/galah_single_star_flux.csv'
-# sigma_df_filename = './data/gaia_rvs_dataframes/galah_single_star_sigma.csv'
-# flux_df.to_csv(flux_df_filename)
-# sigma_df.to_csv(sigma_df_filename)
-# print('training set saved to {}'.format(flux_df_filename))
-# print('test set saved to {}'.format(sigma_df_fileame))
 
 # split into training + test sets
 np.random.seed(1234)
@@ -214,11 +209,6 @@ fits.HDUList([fits.PrimaryHDU(training_sigma_arr)]).writeto(training_sigma_arr_f
 print('training set flux array saved to {}'.format(training_flux_arr_filename))
 print('training set sigma array saved to {}'.format(training_sigma_arr_filename))
 
-# I'll run this quickly with a small number
-# then I'll git commit
-# then I'll uncomment the line that uploads the table to gaia
-# then I'll make sure the tables are not being index/cut
-# then I'll run the full code.
 
 
 
