@@ -50,12 +50,43 @@ galah_stars_gaia = galah_stars_gaia.rename(
     "e_logg":"galah_elogg",
     "fe_h": "galah_feh", 
     "e_fe_h": "galah_efeh",
-    "alpha_fe": "galah_alpha_fe",
-    "e_alpha_fe": "galah_ealpha_fe",
+    "alpha_fe": "galah_alpha",
+    "e_alpha_fe": "galah_ealpha",
     "vbroad":"galah_vbroad",
     "e_vbroad": "galah_evbroad",
     "v_jk": "galah_vjk"
     })
 
-# next step: I need to now get the Gaia parameters for these
-# and then filter them
+# require training set labels to be finite
+training_set_labels = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', 'galah_vbroad']
+galah_stars_gaia = galah_stars_gaia.dropna(subset=training_set_labels)
+
+# filters to remove stars with label uncertainties >2*median GALAH uncertainty
+def emax(colname):
+	return 2*np.nanmedian(galah_stars_gaia[colname])
+
+emax_teff = emax('galah_eteff')
+emax_logg = emax('galah_elogg')
+emax_feh = emax('galah_efeh')
+emax_alpha = emax('galah_ealpha')
+emax_vbroad = emax('galah_evbroad')
+galah_stars_gaia = galah_stars_gaia.query('galah_eteff<@emax_teff & galah_elogg<@emax_logg \
+            & galah_efeh<@emax_feh & galah_ealpha<@emax_alpha\
+            & galah_evbroad<@emax_vbroad')
+
+# remove known binaries from training set
+# note: using binary galah IDs from original vizier file yielded identical results
+binary_galah_ids = galah_binary_catalog.spectID.to_numpy()
+binary_idx_to_remove = []
+for i in range(len(galah_stars_gaia)):
+    row = galah_stars_gaia.iloc[i]
+    if row.sobject_id in binary_galah_ids:
+        binary_idx_to_remove.append(i)
+galah_stars_gaia = galah_stars_gaia.drop(galah_stars_gaia.index[binary_idx_to_remove])
+
+# next I need to run the gaia query to get the spectra
+# where I filter based on gaia parameters
+
+
+
+
