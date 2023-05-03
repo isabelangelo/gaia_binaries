@@ -1,14 +1,20 @@
+from astropy.table import Table
+import astroquery
+from astroquery.gaia import Gaia
+import pandas as pd
+import numpy as np
+
 # log in to gaia archive
 Gaia.login(user='iangelo', password='@Sugargirl1994')
 
 # function to upload pandas table to Gaia
-def upload_table_to_gaia(df, name):
+def upload_table(df, name):
 	tbl = Table.from_pandas(df)
 	Gaia.upload_table(upload_resource=tbl, table_name=name)
 
 # much longer function to query gaia and 
 # save labels, flux + sigma
-def retrieve_gaia_data_and_labels(query):
+def retrieve_data_and_labels(query):
 	job = Gaia.launch_job_async(query)
 	results = job.get_results().to_pandas()
 	print(f'Table size (rows): {len(results)} after filters based on Gaia DR3 labels')
