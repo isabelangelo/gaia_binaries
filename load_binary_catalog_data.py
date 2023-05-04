@@ -1,4 +1,4 @@
-# to do : add print statements and comment code
+# uncomment line that writes the table to gaia (L86)
 
 from astropy.table import Table
 import numpy as np
@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import astroquery
 from astroquery.vizier import Vizier
+import gaia
 
 ########### load data from catalogs ####################################################
 # GALAH DR3 main catalog
@@ -19,6 +20,9 @@ Vizier.ROW_LIMIT = -1
 catalogs = Vizier.get_catalogs(catalogs.keys())
 galah_binary_catalog = catalogs[0].to_pandas()
 
+# reformat Gaia designation column
+galah_gaia_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in galah_gaia_xmatch['designation']]
+
 
 ########### crossmatch with GALAH allstars + Gaia and filter sample ############################
 # merge GALAH binaries with GALAH star catalog
@@ -30,11 +34,15 @@ galah_binaries_allstar = pd.merge(galah_binary_catalog, galah_allstar_catalog[ga
     left_on='spectID', right_on='sobject_id', validate='one_to_one')
 galah_binaries_gaia = pd.merge(galah_binaries_allstar, galah_gaia_xmatch[galah_gaia_xmatch_cols], 
 	on='sobject_id', validate='one_to_one')
+print('{} binaries from Traven et al. (2020)'.format(len(galah_binary_catalog)))
+print('{} found in GALAH allstar catalog'.format(len(galah_binaries_allstar)))
 
 # remove duplicate rows based on designation,
 # keep one observation (sobject_id) per unique gaia designation
 galah_binaries_gaia = galah_binaries_gaia.drop_duplicates(subset='designation', keep='first')
 galah_binaries_gaia = galah_binaries_gaia[galah_binaries_gaia.designation!=' ']
+print('{} with unique Gaia designations'.format(len(galah_binaries_gaia)))
+
 
 galah_binaries_gaia = galah_binaries_gaia.rename(
     columns={
@@ -64,21 +72,37 @@ galah_binaries_gaia = galah_binaries_gaia.rename(
 
 # require logg > 4
 galah_binaries_gaia = galah_binaries_gaia.query('galah_logg > 4')
+print('{} with galah logg > 4'.format(len(galah_binaries_gaia)))
 
 ########### upload to gaia to filter + download RVS spectra ##################################
-# upload table to gaia
-galah_binaries_gaia = Table.from_pandas(galah_binaries_gaia)
-Gaia.login(user='iangelo', password='@Sugargirl1994')
-Gaia.upload_table(upload_resource=galah_stars_gaia, table_name='galah_binaries_gaia')
-
 # query to filter based on Gaia parameters + download RVS spectra
 query = f"SELECT dr3.designation, galah.sobject_id, dr3.source_id \
-FROM user_iangelo.galah_binaries_filtered as galah \
+FROM user_iangelo.galah_binaries_gaia as galah \
 JOIN gaiadr3.gaia_source as dr3 \
     ON dr3.designation = galah.designation \
 WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 50 \
-AND dr3.non_single_star > 0"
+AND dr3.rvs_spec_sig_to_noise > 50"
+
+# gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
+galah_binaries_gaia_results, galah_binaries_flux_df, galah_binaries_sigma_df = gaia.retrieve_data_and_labels(query)
+print('{} with has_rvs = True, rvs snr > 50'.format(len(galah_binaries_gaia_results)))
+
+print('saving flux, flux_err to .csv files')
+gaia.write_labels_to_file(galah_binaries_gaia, 'galah_binaries')
+gaia.write_flux_data_to_csv(galah_binaries_flux_df, galah_binaries_sigma_df, 'galah_binaries')
+
+
+# next: I think I can add the other catalogs here...
+# but they just query existing catalogs
+# pw2020_binaries_filtered.csv
+# eb2018_binaries_filtered.csv
+# where are these from?
+
+
+
+
+
+
 
 
 

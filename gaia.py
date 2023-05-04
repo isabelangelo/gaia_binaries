@@ -1,6 +1,8 @@
+# to do : move the file writing files somewhere else? it may not be necessary
 from astropy.table import Table
 import astroquery
 from astroquery.gaia import Gaia
+from astropy.io import fits
 import pandas as pd
 import numpy as np
 
@@ -53,7 +55,7 @@ def retrieve_data_and_labels(query):
 
 
 	########### save RVS spectra + corresponding source ids to files ##################################
-	print('saving flux + flux errors to .csv files')
+	print('writing flux + flux errors to dataframes')
 	# save RVS spectra to .csv file
 	dl_key   = 'RVS_COMBINED.xml'    # Try also with 'XP_SAMPLED_COMBINED.xml'
 	source_id_list = []
@@ -73,4 +75,35 @@ def retrieve_data_and_labels(query):
 	sigma_df = pd.DataFrame(dict(zip(source_id_list, sigma_list)))
 
 	return results, flux_df, sigma_df
+
+
+# function to write outputs to files
+def write_labels_to_file(label_df, fileroot):
+	path = './data/label_dataframes/'
+	filename = path + fileroot + '_labels.csv'
+	label_df.to_csv(filename)
+	print('{} labels saved to {}'.format(fileroot, filename))
+
+
+def write_flux_data_to_csv(flux_df, sigma_df, fileroot):
+	path = './data/gaia_rvs_dataframes/'
+	flux_filename = path + fileroot + '_flux.csv'
+	sigma_filename = path + fileroot + '_sigma.csv'
+	flux_df.to_csv(flux_filename)
+	sigma_df.to_csv(sigma_filename)
+	print('{} flux, sigma dataframe saved to:\n{}\n{}'.format(
+		fileroot,
+		flux_filename, 
+		sigma_filename))
+
+def write_flux_data_to_fits(flux_df, sigma_df, fileroot):
+	path = './data/cannon_training_data/'
+	flux_filename = path + fileroot + '_flux.fits'
+	sigma_filename = path + fileroot + '_sigma.fits' 
+	flux_arr = flux_df.to_numpy().T
+	sigma_arr = sigma_df.to_numpy().T
+	fits.HDUList([fits.PrimaryHDU(flux_arr)]).writeto(flux_filename, overwrite=True)
+	fits.HDUList([fits.PrimaryHDU(sigma_arr)]).writeto(sigma_filename, overwrite=True)
+	print('{} flux array saved to {}'.format(fileroot, flux_arr))
+	print('{} sigma array saved to {}'.format(fileroot, sigma_arr))
 

@@ -1,6 +1,6 @@
 # NOTE: before running this code, you need to delete galah_stars_gaia table from the gaia archive online
 from astropy.table import Table
-from astropy.io import fits
+# from astropy.io import fits
 import numpy as np
 import pandas as pd
 from astroquery.vizier import Vizier
@@ -105,6 +105,8 @@ AND dr3.non_single_star = 0"
 # query gaia and download RVS spectra, save to dataframes
 gaia.upload_table(galah_stars_gaia, 'galah_stars_gaia')
 galah_stars_gaia_results, flux_df, sigma_df = gaia.retrieve_data_and_labels(query)
+print('{} with has_rvs = True, rvs snr > 50, non_single_star = 0'.format(len(galah_stars_gaia_results)))
+print('saving flux, flux_err to .csv files')
 
 # split into training + test sets
 np.random.seed(1234)
@@ -119,35 +121,42 @@ test_source_ids = np.array(list((set(source_id_list) - set(training_source_ids))
 # write training + test set labels to .csv files
 training_label_df = galah_stars_gaia_results[galah_stars_gaia_results['source_id'].isin(training_source_ids)]
 test_label_df = galah_stars_gaia_results[galah_stars_gaia_results['source_id'].isin(test_source_ids)]
-training_label_filename = './data/label_dataframes/training_labels.csv'
-test_label_filename = './data/label_dataframes/test_labels.csv'
-training_label_df.to_csv(training_label_filename)
-test_label_df.to_csv(test_label_filename)
-print('training set labels saved to {}'.format(training_label_filename))
-print('test set labels saved to {}'.format(test_label_filename))
+# training_label_filename = './data/label_dataframes/training_labels.csv'
+# test_label_filename = './data/label_dataframes/test_labels.csv'
+# training_label_df.to_csv(training_label_filename)
+# test_label_df.to_csv(test_label_filename)
+# print('training set labels saved to {}'.format(training_label_filename))
+# print('test set labels saved to {}'.format(test_label_filename))
+
+gaia.write_labels_to_file(training_label_df, 'training')
+gaia.write_labels_to_file(test_label_df, 'test')
 
 # write training + test set flux, sigma to .csv files
-flux_sigma_df_path = './data/gaia_rvs_dataframes/'
-training_flux_df_filename = flux_sigma_df_path + 'training_flux.csv'
-test_flux_df_filename = flux_sigma_df_path + 'test_flux.csv'
-training_sigma_df_filename = flux_sigma_df_path + 'training_sigma.csv'
-test_sigma_df_filename = flux_sigma_df_path + 'test_sigma.csv'
-flux_df[training_source_ids].to_csv(training_flux_df_filename)
-flux_df[test_source_ids].to_csv(test_flux_df_filename)
-sigma_df[training_source_ids].to_csv(training_sigma_df_filename)
-sigma_df[test_source_ids].to_csv(test_sigma_df_filename)
-print('training set flux, sigma dataframe saved to:\n{}\n{}'.format(training_flux_df_filename, training_sigma_df_filename))
-print('test set flux, sigma dataframe saved to:\n{}\n{}'.format(test_flux_df_filename, test_sigma_df_filename))
+# flux_sigma_df_path = './data/gaia_rvs_dataframes/'
+# training_flux_df_filename = flux_sigma_df_path + 'training_flux.csv'
+# test_flux_df_filename = flux_sigma_df_path + 'test_flux.csv'
+# training_sigma_df_filename = flux_sigma_df_path + 'training_sigma.csv'
+# test_sigma_df_filename = flux_sigma_df_path + 'test_sigma.csv'
+# flux_df[training_source_ids].to_csv(training_flux_df_filename)
+# flux_df[test_source_ids].to_csv(test_flux_df_filename)
+# sigma_df[training_source_ids].to_csv(training_sigma_df_filename)
+# sigma_df[test_source_ids].to_csv(test_sigma_df_filename)
+# print('training set flux, sigma dataframe saved to:\n{}\n{}'.format(training_flux_df_filename, training_sigma_df_filename))
+# print('test set flux, sigma dataframe saved to:\n{}\n{}'.format(test_flux_df_filename, test_sigma_df_filename))
+gaia.write_flux_data_to_csv(flux_df[training_source_ids], sigma_df[training_source_ids], 'training')
+gaia.write_flux_data_to_csv(flux_df[test_source_ids], sigma_df[test_source_ids], 'test')
 
 # write training set flux, ivar to fits files for the cannon
-training_flux_arr = flux_df[training_source_ids].to_numpy().T
-training_sigma_arr = sigma_df[training_source_ids].to_numpy().T
-training_flux_arr_filename = './data/cannon_training_data/training_flux.fits'
-training_sigma_arr_filename = './data/cannon_training_data/training_sigma.fits'
-fits.HDUList([fits.PrimaryHDU(training_flux_arr)]).writeto(training_flux_arr_filename, overwrite=True)
-fits.HDUList([fits.PrimaryHDU(training_sigma_arr)]).writeto(training_sigma_arr_filename, overwrite=True)
-print('training set flux array saved to {}'.format(training_flux_arr_filename))
-print('training set sigma array saved to {}'.format(training_sigma_arr_filename))
+# training_flux_arr = flux_df[training_source_ids].to_numpy().T
+# training_sigma_arr = sigma_df[training_source_ids].to_numpy().T
+# training_flux_arr_filename = './data/cannon_training_data/training_flux.fits'
+# training_sigma_arr_filename = './data/cannon_training_data/training_sigma.fits'
+# fits.HDUList([fits.PrimaryHDU(training_flux_arr)]).writeto(training_flux_arr_filename, overwrite=True)
+# fits.HDUList([fits.PrimaryHDU(training_sigma_arr)]).writeto(training_sigma_arr_filename, overwrite=True)
+# print('training set flux array saved to {}'.format(training_flux_arr_filename))
+# print('training set sigma array saved to {}'.format(training_sigma_arr_filename))
+gaia.write_flux_data_to_fits(flux_df[training_source_ids], sigma_df[training_source_ids], 'training')
+gaia.write_flux_data_to_fits(flux_df[test_source_ids], sigma_df[test_source_ids], 'test')
 
 
 
