@@ -104,6 +104,6 @@ def write_flux_data_to_fits(flux_df, sigma_df, fileroot):
 	sigma_arr = sigma_df.to_numpy().T
 	fits.HDUList([fits.PrimaryHDU(flux_arr)]).writeto(flux_filename, overwrite=True)
 	fits.HDUList([fits.PrimaryHDU(sigma_arr)]).writeto(sigma_filename, overwrite=True)
-	print('{} flux array saved to {}'.format(fileroot, flux_arr))
-	print('{} sigma array saved to {}'.format(fileroot, sigma_arr))
+	print('{} flux array saved to {}'.format(fileroot, flux_filename))
+	print('{} sigma array saved to {}'.format(fileroot, sigma_filename))
 

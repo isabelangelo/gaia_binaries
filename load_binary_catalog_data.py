@@ -1,5 +1,3 @@
-# uncomment line that writes the table to gaia (L86)
-
 from astropy.table import Table
 import numpy as np
 import pandas as pd
@@ -83,7 +81,8 @@ JOIN gaiadr3.gaia_source as dr3 \
 WHERE dr3.has_rvs = 'True' \
 AND dr3.rvs_spec_sig_to_noise > 50"
 
-# gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
+# download gaia data and save to files
+gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
 galah_binaries_gaia_results, galah_binaries_flux_df, galah_binaries_sigma_df = gaia.retrieve_data_and_labels(query)
 print('{} with has_rvs = True, rvs snr > 50'.format(len(galah_binaries_gaia_results)))
 
@@ -94,9 +93,10 @@ gaia.write_flux_data_to_csv(galah_binaries_flux_df, galah_binaries_sigma_df, 'ga
 
 # next: I think I can add the other catalogs here...
 # but they just query existing catalogs
-# pw2020_binaries_filtered.csv
+# pw2020_binaries_filtered.csv - this comes from code to filter, although I do think it's gone...
+# I'll have to look at notes from the Gaia fete.
 # eb2018_binaries_filtered.csv
-# where are these from?
+# where are these from? I can check the other branch/download from gaia/look at my notes
 
 
 
