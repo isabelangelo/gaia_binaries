@@ -118,9 +118,13 @@ n_test = n_total - n_training
 training_source_ids = np.random.choice(source_id_list, size=n_training, replace=False)
 test_source_ids = np.array(list((set(source_id_list) - set(training_source_ids))))
 
+import pdb;pdb.set_trace()
+
 # write training + test set labels to .csv files
-training_label_df = galah_stars_gaia_results[galah_stars_gaia_results['source_id'].isin(training_source_ids)]
-test_label_df = galah_stars_gaia_results[galah_stars_gaia_results['source_id'].isin(test_source_ids)]
+# this step needs to preserve the order of the training/test source_id lists for the canno to work
+training_label_df = galah_stars_gaia_results.set_index('source_id').loc[training_source_ids].reset_index(inplace=False)
+test_label_df = galah_stars_gaia_results.set_index('source_id').loc[test_source_ids].reset_index(inplace=False)
+
 gaia.write_labels_to_file(training_label_df, 'training')
 gaia.write_labels_to_file(test_label_df, 'test')
 
@@ -130,7 +134,9 @@ gaia.write_flux_data_to_csv(flux_df[test_source_ids], sigma_df[test_source_ids],
 
 # write training set flux, ivar to fits files for the cannon
 gaia.write_flux_data_to_fits(flux_df[training_source_ids], sigma_df[training_source_ids], 'training')
-gaia.write_flux_data_to_fits(flux_df[test_source_ids], sigma_df[test_source_ids], 'test')
+
+
+
 
 
 
