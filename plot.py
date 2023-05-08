@@ -1,10 +1,11 @@
-# okay, this code is ready to start implementing in the train cannon script.
-# but first I need to take a break
+from astropy.io import fits
 import matplotlib.pyplot as plt
-rcParams['font.size']=12
+import numpy as np
+
+plt.rcParams['font.size']=12
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
 
-def training_set_histogram(training_label_df, test_label_df, figure_path):
+def plot_training_set(training_label_df, test_label_df, figure_path):
 	"""
 	Plot label distributions for each label in the Cannon training + test set
 	saves to file in ./data/cannon_models
@@ -13,28 +14,28 @@ def training_set_histogram(training_label_df, test_label_df, figure_path):
 	plt.rcParams['font.size']=10
 	ctr = 'orange'
 	cte = 'darkolivegreen'
-	plt.subplot(231);xlabel(r'$T_{eff}$ (K)');ylabel('number of stars')
+	plt.subplot(231);plt.xlabel(r'$T_{eff}$ (K)');plt.ylabel('number of stars')
 	plt.hist(training_label_df.galah_teff, color=ctr)
 	plt.hist(test_label_df.galah_teff, color=cte)
 	plt.text(6100,1500,'training set', color=ctr)
 	plt.text(6100,1300,'test set', color=cte)
-	plt.subplot(232);xlabel('logg (dex)');ylabel('number of stars')
+	plt.subplot(232);plt.xlabel('logg (dex)');plt.ylabel('number of stars')
 	plt.hist(training_label_df.galah_logg, color=ctr)
 	plt.hist(test_label_df.galah_logg, color=cte)
-	plt.subplot(233);xlabel('[Fe/H] (dex)');ylabel('number of stars')
+	plt.subplot(233);plt.xlabel('[Fe/H] (dex)');plt.ylabel('number of stars')
 	plt.hist(training_label_df.galah_feh, color=ctr)
 	plt.hist(test_label_df.galah_feh, color=cte)
-	plt.subplot(234);xlabel(r'[$\alpha$/Fe] (dex)');ylabel('number of stars')
+	plt.subplot(234);plt.xlabel(r'[$\alpha$/Fe] (dex)');plt.ylabel('number of stars')
 	plt.hist(training_label_df.galah_alpha, color=ctr)
 	plt.hist(test_label_df.galah_alpha, color=cte)
-	plt.subplot(235);xlabel(r'$v_{broad}$ (km/s)');ylabel('number of stars')
+	plt.subplot(235);plt.xlabel(r'$v_{broad}$ (km/s)');plt.ylabel('number of stars')
 	plt.hist(training_label_df.galah_vbroad, color=ctr)
 	plt.hist(test_label_df.galah_vbroad, color=cte)
 	plt.subplots_adjust(hspace=0.3, wspace=0.4)
 	plt.savefig(figure_path, dpi=300)
 
 
-def model_plot_top_panel(training_label_df, figure_path):
+def plot_example_spec_top_panel(training_label_df, figure_path):
 	"""
 	Plot label distributions with 3 examples from training set over-plotted
 	Examples are stars with Teff=4500, 5800, 6200 K
@@ -49,22 +50,22 @@ def model_plot_top_panel(training_label_df, figure_path):
 
 	def plot_hist(label):
 	    label_str = 'galah_{}'.format(label)
-	    hist(training_set[label_str], histtype='step', color='grey', lw=2)
-	    axvline(row4500[label_str], color=c4500)
-	    axvline(row5800[label_str], color=c5800)
-	    axvline(row6200[label_str], color=c6200)
-	    yticks([])
+	    plt.hist(training_label_df[label_str], histtype='step', color='grey', lw=2)
+	    plt.axvline(row4500[label_str], color=c4500)
+	    plt.axvline(row5800[label_str], color=c5800)
+	    plt.axvline(row6200[label_str], color=c6200)
+	    plt.yticks([])
     
 	def plot_2d_dist(label1, label2):
 	    label1_str = 'galah_{}'.format(label1)
 	    label2_str = 'galah_{}'.format(label2)
-	    plot(training_set[label1_str], training_set[label2_str], '.', color='lightgrey')
-	    plot(row4500[label1_str], row4500[label2_str], mec='w', ms=7, marker='o', color=c4500)
-	    plot(row5800[label1_str], row5800[label2_str], mec='w', ms=7, marker='o', color=c5800)
-	    plot(row6200[label1_str], row6200[label2_str], mec='w', ms=7, marker='o', color=c6200)
+	    plt.plot(training_label_df[label1_str], training_label_df[label2_str], '.', color='lightgrey')
+	    plt.plot(row4500[label1_str], row4500[label2_str], mec='w', ms=7, marker='o', color=c4500)
+	    plt.plot(row5800[label1_str], row5800[label2_str], mec='w', ms=7, marker='o', color=c5800)
+	    plt.plot(row6200[label1_str], row6200[label2_str], mec='w', ms=7, marker='o', color=c6200)
 
 
-	figure(figsize=(10,10))
+	plt.figure(figsize=(10,10))
 	plt.subplot(5,5,1);plot_hist('teff')
 	plt.subplot(5,5,6);plt.ylabel('logg');plot_2d_dist('teff', 'logg')
 	plt.subplot(5,5,7);plot_hist('logg')
@@ -84,7 +85,7 @@ def model_plot_top_panel(training_label_df, figure_path):
 
 
 
-def model_plot_bottom_panel(training_label_df, model, figure_path):
+def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, figure_path):
 	"""
 	Plot data + cannon model fits for 3 examples from training set
 	Examples are stars with Teff=4500, 5800, 6200 K
@@ -97,11 +98,11 @@ def model_plot_bottom_panel(training_label_df, model, figure_path):
 	c5800 = 'goldenrod'
 	c6200 = 'cornflowerblue'
 	def r(value):
-    	return np.round(value, 2)
+		return np.round(value, 2)
 
 	def plot_spec(row, crow):
-	    flux = flux_data[str(row.source_id)][20:-20]
-	    sigma = sigma_data[str(row.source_id)][20:-20]
+	    flux = flux_df[str(row.source_id)][20:-20]
+	    sigma = sigma_df[str(row.source_id)][20:-20]
 	    ivar = 1/sigma**2
 	    result = model.test(flux, ivar)
 	    fit_teff, fit_logg, fit_feh, fit_alpha, fit_vbroad = result[0][0]
@@ -126,16 +127,19 @@ def model_plot_bottom_panel(training_label_df, model, figure_path):
 	    plt.text(864, 1.2, 'DR3 ID '+str(row.source_id), color='dimgrey')
 	    plt.text(846.5, 1.2, data_str, color='dimgrey')
 	    plt.text(846.5, 1.12, fit_str, color=crow)
-	    plt.ylim(0.2,1.3);xlim(w.min(), w.max())
+	    plt.ylim(0.2,1.3);plt.xlim(w.min(), w.max())
 	    plt.ylabel('normalized flux')
 
 	plt.figure(figsize=(15,10))
-	plt.subplot(311);plt.plot_spec(row6200, c6200)
-	plt.subplot(312);plt.plot_spec(row5800, c5800)
-	plt.subplot(313);plt.plot_spec(row4500, c4500)
+	plt.subplot(311);plot_spec(row6200, c6200)
+	plt.subplot(312);plot_spec(row5800, c5800)
+	plt.subplot(313);plot_spec(row4500, c4500)
 	plt.subplots_adjust(hspace=0)
 	plt.xlabel('wavelength (nm)')
 	plt.savefig(figure_path, dpi=300)
+
+# next: I need to add the label plot...
+# I feel like this is going to take a while to run but maybe it's fine?
 
 
 
