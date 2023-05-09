@@ -1,6 +1,5 @@
 # NOTE: before running this code, you need to delete galah_stars_gaia table from the gaia archive online
 from astropy.table import Table
-# from astropy.io import fits
 import numpy as np
 import pandas as pd
 from astroquery.vizier import Vizier

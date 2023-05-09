@@ -1,6 +1,8 @@
 from astropy.io import fits
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import numpy as np
+import pandas as pd
 
 plt.rcParams['font.size']=12
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
@@ -138,8 +140,90 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	plt.xlabel('wavelength (nm)')
 	plt.savefig(figure_path, dpi=300)
 
-# next: I need to add the label plot...
-# I feel like this is going to take a while to run but maybe it's fine?
+
+def plot_one_to_one(label_df, flux_df, sigma_df, model, 
+	figure_path, path_to_save_labels=None):
+
+	pc = 'k';markersize=1;alpha_value=0.5
+	labels_to_plot = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', 'galah_vbroad']
+
+	def compute_cannon_labels(label_df, flux_df, sigma_df, model):
+
+	    galah_keys = ['sobject_id', 'galah_teff', 'galah_logg', 'galah_feh', \
+	          'galah_alpha', 'galah_vbroad', 'rvs_spec_sig_to_noise']
+	    cannon_keys = ['cannon_teff', 'cannon_logg', 'cannon_feh', 'cannon_alpha', \
+	           'cannon_vbroad', 'cannon_chi_sq', 'cannon_r_chi_sq']
+	    cannon_label_data = []
+	    # iterate over each object
+	    for source_id in label_df.source_id.to_numpy():
+	        # store galah labels
+	        row = label_df.loc[label_df.source_id==source_id]
+	        galah_labels = row[galah_keys].values.flatten().tolist()
+	        # fit cannon model
+	        flux = flux_df[str(source_id)].to_numpy()[20:-20]
+	        ivar = 1/sigma_df[str(source_id)].to_numpy()[20:-20]**2
+	        result = model.test(flux, ivar)
+	        teff_fit, logg_fit, feh_fit, alpha_fit, vbroad_fit = result[0][0]
+	        # store cannon labels
+	        cannon_labels = [teff_fit, logg_fit, feh_fit, alpha_fit, vbroad_fit, \
+	        result[2][0]['chi_sq'], result[2][0]['r_chi_sq']]
+	        # convert to dictionary
+	        keys = galah_keys + cannon_keys
+	        values = galah_labels + cannon_labels
+	        cannon_label_data.append(dict(zip(keys, values)))
+	    cannon_label_df = pd.DataFrame(cannon_label_data)
+	    return cannon_label_df
+
+	def plot_label_one_to_one(label_df, label):
+	    x = label_df['galah_{}'.format(label)]
+	    y = label_df['cannon_{}'.format(label)]
+	    diff = y - x
+	    bias = np.round(np.mean(diff), 3)
+	    rms = np.round(np.sqrt(np.sum(diff**2)/len(diff)), 3)
+	    subplot_label = 'bias, rms = {}, {}'.format(bias, rms)
+	    plt.plot(x, y, '.', color=pc, ms=markersize, alpha=alpha_value)
+	    plt.plot([], [], '.', color='w', label=subplot_label)
+	    plt.xlabel('GALAH {}'.format(label));plt.ylabel('Cannon {}'.format(label))
+	    plt.plot([x.min(), x.max()], [x.min(), x.max()], lw=0.7, color='#AA8ED9')
+	    plt.legend(loc='upper left', frameon=False, labelcolor='firebrick')
+
+	def plot_label_difference(label_df, label):
+	    x = label_df['galah_{}'.format(label)]
+	    y = label_df['cannon_{}'.format(label)]
+	    diff = y - x
+	    plt.hist(diff, histtype='step', color=pc)
+	    plt.xlabel(r'$\Delta {}$'.format(label))
+
+	cannon_label_df = compute_cannon_labels(
+		label_df, 
+		flux_df, 
+		sigma_df, 
+		model)
+
+	if path_to_save_labels is not None:
+		cannon_label_filename = './data/cannon_label_dataframes/'+path_to_save_labels+'.csv'
+		cannon_label_df.to_csv(cannon_label_filename)
+		print('cannon label dataframe saved to {}'.format(cannon_label_filename))
+
+	gs = gridspec.GridSpec(5, 2, width_ratios=[2,1])
+	plt.figure(figsize=(10,17))
+	for i in range(len(labels_to_plot)):
+		plt.subplot(gs[2*i])
+		plot_label_one_to_one(cannon_label_df, labels_to_plot[i][6:])
+		plt.subplot(gs[2*i+1])
+		plot_label_difference(cannon_label_df, labels_to_plot[i][6:])
+	plt.savefig(figure_path, dpi=300)
+
+
+
+
+# add print statements to training_cannon_model.py,
+# and maybe one to load_training_and_test.py
+# then run as is for current model
+# then undo commented lines in train_cannon_model
+# then commit changes
+# then when re-training on other elements, I can run the code
+# with no comments
 
 
 
