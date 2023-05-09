@@ -115,7 +115,7 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	        r(row['galah_logg']), 
 	        r(row['galah_feh']), 
 	        r(row['galah_alpha']), 
-	        r(row['galah_vbroa']d))
+	        r(row['galah_vbroad']))
 	    
 	    fit_str = 'Cannon Teff={}, logg={}, feh={}, alpha={}, vbroad={}'.format(
 	        r(fit_teff), 
@@ -149,13 +149,13 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 	"""
 	pc = 'k';markersize=1;alpha_value=0.5
 	if labels_to_plot is None:
-		labels_to_plot = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', 'galah_vbroad']
+		print('ERROR: need to input labels to plot!')
 
 	def compute_cannon_labels(label_df, flux_df, sigma_df, model):
 
 	    galah_keys = ['sobject_id'] + labels_to_plot + ['rvs_spec_sig_to_noise']
-	    cannon_keys = ['cannon_teff', 'cannon_logg', 'cannon_feh', 'cannon_alpha', \
-	           'cannon_vbroad', 'cannon_chi_sq', 'cannon_r_chi_sq']
+	    cannon_keys = [key.replace('galah','cannon') for key in labels_to_plot] + \
+	    ['cannon_chi_sq', 'cannon_r_chi_sq']
 	    cannon_label_data = []
 	    # iterate over each object
 	    for source_id in label_df.source_id.to_numpy():
