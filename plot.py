@@ -111,11 +111,11 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	    fit = result[2][0]['model_flux']
 	    
 	    data_str = 'GALAH Teff={}, logg={}, feh={}, alpha={}, vbroad={}'.format(
-	        r(row.galah_teff), 
-	        r(row.galah_logg), 
-	        r(row.galah_feh), 
-	        r(row.galah_alpha), 
-	        r(row.galah_vbroad))
+	        r(row['galah_teff']), 
+	        r(row['galah_logg']), 
+	        r(row['galah_feh']), 
+	        r(row['galah_alpha']), 
+	        r(row['galah_vbroa']d))
 	    
 	    fit_str = 'Cannon Teff={}, logg={}, feh={}, alpha={}, vbroad={}'.format(
 	        r(fit_teff), 
@@ -142,15 +142,18 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 
 
 def plot_one_to_one(label_df, flux_df, sigma_df, model, 
-	figure_path, path_to_save_labels=None):
-
+	figure_path, path_to_save_labels=None, labels_to_plot=None):
+	"""
+	Plot a one-to-one comparison of the training set labels from GALAH and the Cannon
+    labels inferred from the training set spectra.
+	"""
 	pc = 'k';markersize=1;alpha_value=0.5
-	labels_to_plot = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', 'galah_vbroad']
+	if labels_to_plot is None:
+		labels_to_plot = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', 'galah_vbroad']
 
 	def compute_cannon_labels(label_df, flux_df, sigma_df, model):
 
-	    galah_keys = ['sobject_id', 'galah_teff', 'galah_logg', 'galah_feh', \
-	          'galah_alpha', 'galah_vbroad', 'rvs_spec_sig_to_noise']
+	    galah_keys = ['sobject_id'] + labels_to_plot + ['rvs_spec_sig_to_noise']
 	    cannon_keys = ['cannon_teff', 'cannon_logg', 'cannon_feh', 'cannon_alpha', \
 	           'cannon_vbroad', 'cannon_chi_sq', 'cannon_r_chi_sq']
 	    cannon_label_data = []
@@ -163,9 +166,9 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 	        flux = flux_df[str(source_id)].to_numpy()[20:-20]
 	        ivar = 1/sigma_df[str(source_id)].to_numpy()[20:-20]**2
 	        result = model.test(flux, ivar)
-	        teff_fit, logg_fit, feh_fit, alpha_fit, vbroad_fit = result[0][0]
+	        teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit = result[0][0]
 	        # store cannon labels
-	        cannon_labels = [teff_fit, logg_fit, feh_fit, alpha_fit, vbroad_fit, \
+	        cannon_labels = [teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit, \
 	        result[2][0]['chi_sq'], result[2][0]['r_chi_sq']]
 	        # convert to dictionary
 	        keys = galah_keys + cannon_keys
@@ -213,19 +216,3 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 		plt.subplot(gs[2*i+1])
 		plot_label_difference(cannon_label_df, labels_to_plot[i][6:])
 	plt.savefig(figure_path, dpi=300)
-
-
-
-
-# add print statements to training_cannon_model.py,
-# and maybe one to load_training_and_test.py
-# then run as is for current model
-# then undo commented lines in train_cannon_model
-# then commit changes
-# then when re-training on other elements, I can run the code
-# with no comments
-
-
-
-
-

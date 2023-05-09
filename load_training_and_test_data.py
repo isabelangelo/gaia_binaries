@@ -116,8 +116,8 @@ n_training = int(0.8*n_total)
 n_test = n_total - n_training
 training_source_ids = np.random.choice(source_id_list, size=n_training, replace=False)
 test_source_ids = np.array(list((set(source_id_list) - set(training_source_ids))))
-
-import pdb;pdb.set_trace()
+print('{} stars saved to training set'.format(len(training_source_ids)))
+print('{} stars saved to test set'.format(len(test_source_ids)))
 
 # write training + test set labels to .csv files
 # this step needs to preserve the order of the training/test source_id lists for the canno to work
