@@ -9,6 +9,9 @@ import numpy as np
 # log in to gaia archive
 Gaia.login(user='iangelo', password='@Sugargirl1994')
 
+# Gaia RVS wavelength (for interpolating nan fluxes)
+w_interp_to = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
+
 # function to upload pandas table to Gaia
 def upload_table(df, name):
 	tbl = Table.from_pandas(df)
@@ -68,8 +71,24 @@ def retrieve_data_and_labels(query):
 	        # store the gaia desgination number
 	        source_id_list.append(product.get_field_by_id("source_id").value) 
 	        prod_tab = product.to_table()
-	        flux_list.append(np.array(prod_tab['flux']))
-	        sigma_list.append(np.array(prod_tab['flux_error']))
+
+	        # load flux, sigma from table
+	        # pad the sides since the ends of the RVS specta have >10% nans
+	       	flux = np.array(prod_tab['flux'])[20:-20]
+	        sigma = np.array(prod_tab['flux_error'])[20:-20]
+
+	        # remove nans from flux, sigma
+	        # note: this needs to happen here so that the Cannon
+	        # always returns flux values for all wavelengths
+	        finite_idx = ~np.isnan(flux)
+	        if np.sum(finite_idx) != len(flux):
+        		flux = np.interp(w_interp_to, w_interp_to[finite_idx], flux[finite_idx])
+        	sigma = np.nan_to_num(sigma, nan=1)
+
+        	# append to larger flux array
+        	flux_list.append(np.array(flux))
+	        sigma_list.append(np.array(sigma))
+
 
 	flux_df = pd.DataFrame(dict(zip(source_id_list, flux_list)))
 	sigma_df = pd.DataFrame(dict(zip(source_id_list, sigma_list)))
@@ -79,7 +98,7 @@ def retrieve_data_and_labels(query):
 
 # function to write outputs to files
 def write_labels_to_file(label_df, fileroot):
-	path = './data/label_dataframes/'
+	path = './data/galah_label_dataframes/'
 	filename = path + fileroot + '_labels.csv'
 	label_df.to_csv(filename)
 	print('{} labels saved to {}'.format(fileroot, filename))

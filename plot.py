@@ -103,9 +103,10 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 		return np.round(value, 2)
 
 	def plot_spec(row, crow):
-	    flux = flux_df[str(row.source_id)][20:-20]
-	    sigma = sigma_df[str(row.source_id)][20:-20]
+	    flux = flux_df[str(row.source_id)]
+	    sigma = sigma_df[str(row.source_id)]
 	    ivar = 1/sigma**2
+	    import pdb;pdb.set_trace()
 	    result = model.test(flux, ivar)
 	    fit_teff, fit_logg, fit_feh, fit_alpha, fit_vbroad = result[0][0]
 	    fit = result[2][0]['model_flux']
@@ -163,8 +164,9 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 	        row = label_df.loc[label_df.source_id==source_id]
 	        galah_labels = row[galah_keys].values.flatten().tolist()
 	        # fit cannon model
-	        flux = flux_df[str(source_id)].to_numpy()[20:-20]
-	        ivar = 1/sigma_df[str(source_id)].to_numpy()[20:-20]**2
+	        flux = flux_df[str(source_id)]
+	        sigma = sigma_df[str(source_id)]
+	        ivar = 1/sigma**2
 	        result = model.test(flux, ivar)
 	        teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit = result[0][0]
 	        # store cannon labels
