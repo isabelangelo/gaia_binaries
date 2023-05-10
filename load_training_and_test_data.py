@@ -20,7 +20,7 @@ galah_binary_catalog = catalogs[0].to_pandas()
 # following GALAH website best practices for clean star catalog
 print(len(galah_allstar_catalog), 'GALAH stars in allstar catalog')
 galah_allstar_catalog_cleaned = galah_allstar_catalog.query('(snr_c3_iraf > 100) & (flag_sp == 0) \
-& (flag_fe_h == 0) & (flag_alpha_fe == 0)')
+& (flag_fe_h == 0) & (flag_alpha_fe == 0) & (ruwe_dr2 < 1.4)')
 print(len(galah_allstar_catalog_cleaned), 'remaining after cleaning based on GALAH SNR + quality flags')
 
 # reformat Gaia designation column
@@ -99,10 +99,11 @@ JOIN gaiadr3.gaia_source as dr3 \
 	ON dr3.designation = galah.designation \
 WHERE dr3.has_rvs = 'True' \
 AND dr3.rvs_spec_sig_to_noise > 100 \
-AND dr3.non_single_star = 0"
+AND dr3.non_single_star = 0 \
+AND dr3.ruwe < 1.4"
 
 # query gaia and download RVS spectra, save to dataframes
-# gaia.upload_table(galah_stars_gaia, 'galah_stars_gaia')
+gaia.upload_table(galah_stars_gaia, 'galah_stars_gaia')
 galah_stars_gaia_results, flux_df, sigma_df = gaia.retrieve_data_and_labels(query)
 print('{} with has_rvs = True, snr cuts, non_single_star = 0'.format(len(galah_stars_gaia_results)))
 print('saving flux, flux_err to .csv files')

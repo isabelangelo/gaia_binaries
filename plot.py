@@ -143,54 +143,54 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 
 
 def plot_one_to_one(label_df, flux_df, sigma_df, model, 
-	figure_path, path_to_save_labels=None, labels_to_plot=None):
+	figure_path, path_to_save_labels=None):
 	"""
 	Plot a one-to-one comparison of the training set labels from GALAH and the Cannon
     labels inferred from the training set spectra.
 	"""
 	pc = 'k';markersize=1;alpha_value=0.5
-	if labels_to_plot is None:
-		print('ERROR: need to input labels to plot!')
+	labels_to_plot = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 
 	def compute_cannon_labels(label_df, flux_df, sigma_df, model):
 
-	    galah_keys = ['sobject_id'] + labels_to_plot + ['rvs_spec_sig_to_noise']
-	    cannon_keys = [key.replace('galah','cannon') for key in labels_to_plot] + \
-	    ['cannon_chi_sq', 'cannon_r_chi_sq']
-	    cannon_label_data = []
-	    # iterate over each object
-	    for source_id in label_df.source_id.to_numpy():
-	        # store galah labels
-	        row = label_df.loc[label_df.source_id==source_id]
-	        galah_labels = row[galah_keys].values.flatten().tolist()
-	        # fit cannon model
-	        flux = flux_df[str(source_id)]
-	        sigma = sigma_df[str(source_id)]
-	        ivar = 1/sigma**2
-	        result = model.test(flux, ivar)
-	        teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit = result[0][0]
-	        # store cannon labels
-	        cannon_labels = [teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit, \
-	        result[2][0]['chi_sq'], result[2][0]['r_chi_sq']]
-	        # convert to dictionary
-	        keys = galah_keys + cannon_keys
-	        values = galah_labels + cannon_labels
-	        cannon_label_data.append(dict(zip(keys, values)))
-	    cannon_label_df = pd.DataFrame(cannon_label_data)
-	    return cannon_label_df
+		galah_keys = ['sobject_id'] + labels_to_plot + ['rvs_spec_sig_to_noise']
+
+		cannon_keys = [key.replace('galah','cannon') for key in labels_to_plot] + \
+		['cannon_chi_sq', 'cannon_r_chi_sq']
+		cannon_label_data = []
+		# iterate over each object
+		for source_id in label_df.source_id.to_numpy():
+			# store galah labels
+			row = label_df.loc[label_df.source_id==source_id]
+			galah_labels = row[galah_keys].values.flatten().tolist()
+			# fit cannon model
+			flux = flux_df[str(source_id)]
+			sigma = sigma_df[str(source_id)]
+			ivar = 1/sigma**2
+			result = model.test(flux, ivar)
+			teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit = result[0][0]
+			# store cannon labels
+			cannon_labels = [teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit, \
+			result[2][0]['chi_sq'], result[2][0]['r_chi_sq']]
+			# convert to dictionary
+			keys = galah_keys + cannon_keys
+			values = galah_labels + cannon_labels
+			cannon_label_data.append(dict(zip(keys, values)))
+		cannon_label_df = pd.DataFrame(cannon_label_data)
+		return cannon_label_df
 
 	def plot_label_one_to_one(label_df, label):
-	    x = label_df['galah_{}'.format(label)]
-	    y = label_df['cannon_{}'.format(label)]
-	    diff = y - x
-	    bias = np.round(np.mean(diff), 3)
-	    rms = np.round(np.sqrt(np.sum(diff**2)/len(diff)), 3)
-	    subplot_label = 'bias, rms = {}, {}'.format(bias, rms)
-	    plt.plot(x, y, '.', color=pc, ms=markersize, alpha=alpha_value)
-	    plt.plot([], [], '.', color='w', label=subplot_label)
-	    plt.xlabel('GALAH {}'.format(label));plt.ylabel('Cannon {}'.format(label))
-	    plt.plot([x.min(), x.max()], [x.min(), x.max()], lw=0.7, color='#AA8ED9')
-	    plt.legend(loc='upper left', frameon=False, labelcolor='firebrick')
+		x = label_df['galah_{}'.format(label)]
+		y = label_df['cannon_{}'.format(label)]
+		diff = y - x
+		bias = np.round(np.mean(diff), 3)
+		rms = np.round(np.sqrt(np.sum(diff**2)/len(diff)), 3)
+		subplot_label = 'bias, rms = {}, {}'.format(bias, rms)
+		plt.plot(x, y, '.', color=pc, ms=markersize, alpha=alpha_value)
+		plt.plot([], [], '.', color='w', label=subplot_label)
+		plt.xlabel('GALAH {}'.format(label));plt.ylabel('Cannon {}'.format(label))
+		plt.plot([x.min(), x.max()], [x.min(), x.max()], lw=0.7, color='#AA8ED9')
+		plt.legend(loc='upper left', frameon=False, labelcolor='firebrick')
 
 	def plot_label_difference(label_df, label):
 	    x = label_df['galah_{}'.format(label)]

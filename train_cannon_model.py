@@ -8,7 +8,7 @@ import os
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'galah_labels_5para_SNR100_GALAHSNR100'
+model_fileroot = 'galah_labels_5para_SNR100_GALAHSNR100_RUWECUT'
 
 ################# define training set + get labels ###################################################
 
@@ -36,7 +36,7 @@ model = tc.CannonModel(training_set, normalized_flux, normalized_ivar,
 model_filename = './data/cannon_models/' + model_fileroot + '.model'
 model.train()
 print('finished training cannon model')
-# model.write(model_filename, include_training_set_spectra=True)
+model.write(model_filename, include_training_set_spectra=True)
 print('model written to {}'.format(model_filename))
 
 # print training set GALAH label errors
@@ -48,7 +48,7 @@ for label in training_labels:
 
 # save diagnostic plots
 model_figure_path = './data/cannon_models/'+model_fileroot+'_figures/'
-# os.mkdir(model_figure_path)
+os.mkdir(model_figure_path)
 
 # commenting this out for now since it's pretty redundant with the one-to-one plot
 # but it might be useful if I need a plot of just the training set later on
@@ -91,7 +91,6 @@ plot.plot_one_to_one(
 	sigma_df,
 	model,
 	model_figure_path + 'one_to_one.png',
-	path_to_save_labels = model_fileroot + '_cannon_labels',
-	labels_to_plot = training_labels)
+	path_to_save_labels = model_fileroot + '_cannon_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 
