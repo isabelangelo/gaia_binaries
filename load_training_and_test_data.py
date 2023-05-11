@@ -63,18 +63,19 @@ galah_stars_gaia = galah_stars_gaia.dropna(subset=training_set_labels)
 print(len(galah_stars_gaia), 'with finite training set labels')
 
 # filters to remove stars with label uncertainties >2*median GALAH uncertainty
+# and require GALAH logg>4
 def emax(colname):
-	return 2*np.nanmedian(galah_stars_gaia[colname])
-
-emax_teff = emax('galah_eteff')
-emax_logg = emax('galah_elogg')
-emax_feh = emax('galah_efeh')
-emax_alpha = emax('galah_ealpha')
-emax_vbroad = emax('galah_evbroad')
+	return 2*np.nanmedian(galah_allstar_catalog[colname])
+# using original column names to filter based on errors in GALAH allstars
+emax_teff = emax('e_teff') 
+emax_logg = emax('e_logg')
+emax_feh = emax('e_fe_h')
+emax_alpha = emax('e_alpha_fe')
+emax_vbroad = emax('e_vbroad')
 galah_stars_gaia = galah_stars_gaia.query('galah_logg > 4 & galah_eteff<@emax_teff & galah_elogg<@emax_logg \
             & galah_efeh<@emax_feh & galah_ealpha<@emax_alpha\
             & galah_evbroad<@emax_vbroad')
-print(len(galah_stars_gaia), 'with logg>4, uncertainties < 2x median galah uncertainties')
+print(len(galah_stars_gaia), 'with logg>4, uncertainties < 1.5x median galah uncertainties')
 
 # remove known binaries from training set
 # note: using binary galah IDs from original vizier file yielded identical results

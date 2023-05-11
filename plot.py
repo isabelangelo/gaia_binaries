@@ -106,7 +106,6 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	    flux = flux_df[str(row.source_id)]
 	    sigma = sigma_df[str(row.source_id)]
 	    ivar = 1/sigma**2
-	    import pdb;pdb.set_trace()
 	    result = model.test(flux, ivar)
 	    fit_teff, fit_logg, fit_feh, fit_alpha, fit_vbroad = result[0][0]
 	    fit = result[2][0]['model_flux']
