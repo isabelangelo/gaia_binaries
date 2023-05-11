@@ -8,7 +8,7 @@ import os
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'galah_labels_5para_SNR100_GALAHSNR100_RUWECUT_v2'
+model_fileroot = 'GaiaSNR100_GALAHSNR100_GALAHRUWECUT_GaiaRUWECUT'
 
 ################# define training set + get labels ###################################################
 

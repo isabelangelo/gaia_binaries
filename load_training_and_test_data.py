@@ -75,7 +75,7 @@ emax_vbroad = emax('e_vbroad')
 galah_stars_gaia = galah_stars_gaia.query('galah_logg > 4 & galah_eteff<@emax_teff & galah_elogg<@emax_logg \
             & galah_efeh<@emax_feh & galah_ealpha<@emax_alpha\
             & galah_evbroad<@emax_vbroad')
-print(len(galah_stars_gaia), 'with logg>4, uncertainties < 1.5x median galah uncertainties')
+print(len(galah_stars_gaia), 'with logg>4, uncertainties < 2x median galah uncertainties')
 
 # remove known binaries from training set
 # note: using binary galah IDs from original vizier file yielded identical results
@@ -100,7 +100,6 @@ JOIN gaiadr3.gaia_source as dr3 \
 	ON dr3.designation = galah.designation \
 WHERE dr3.has_rvs = 'True' \
 AND dr3.rvs_spec_sig_to_noise > 100 \
-AND dr3.non_single_star = 0 \
 AND dr3.ruwe < 1.4"
 
 # query gaia and download RVS spectra, save to dataframes
