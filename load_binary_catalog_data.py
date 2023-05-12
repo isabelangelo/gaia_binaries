@@ -97,7 +97,13 @@ print(len(galah_binaries_gaia), 'with logg>4, uncertainties < 2x median galah un
 
 ########### upload to gaia to filter + download RVS spectra ##################################
 # query to filter based on Gaia parameters + download RVS spectra
-query = f"SELECT dr3.designation, galah.sobject_id, dr3.source_id \
+query = f"SELECT dr3.designation, galah.sobject_id, dr3.source_id, \
+galah.galah_teff, galah.galah_eteff, galah.galah_logg, galah.galah_elogg, \
+galah.galah_feh, galah.galah_efeh, galah.galah_alpha, galah.galah_ealpha, \
+galah.galah_vbroad, galah.galah_evbroad, galah.galah_teff1,  galah.galah_logg1,  \
+galah.galah_feh12,  galah.galah_vbroad1, galah.galah_teff2, galah.galah_logg2,  \
+galah.galah_vbroad2, galah.galah_rv1, galah.galah_rv2, \
+dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec \
 FROM user_iangelo.galah_binaries_gaia as galah \
 JOIN gaiadr3.gaia_source as dr3 \
     ON dr3.designation = galah.designation \
@@ -106,22 +112,13 @@ AND dr3.rvs_spec_sig_to_noise > 100 \
 AND dr3.ruwe < 1.4"
 
 # download gaia data and save to files
-gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
+# gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
 galah_binaries_gaia_results, galah_binaries_flux_df, galah_binaries_sigma_df = gaia.retrieve_data_and_labels(query)
 print('{} with has_rvs = True, rvs snr > 100'.format(len(galah_binaries_gaia_results)))
 
 print('saving flux, flux_err to .csv files')
 gaia.write_labels_to_file(galah_binaries_gaia_results, 'galah_binaries')
 gaia.write_flux_data_to_csv(galah_binaries_flux_df, galah_binaries_sigma_df, 'galah_binaries')
-
-
-# the revised quality cuts are in the notion document
-# note: the GALAH quality flags remove most of the binaries (sample goes from 11,000 to 200)
-# even just having the GALAH snr cut removes most of them, but I'm going to keep this cut for now.
-
-
-
-
 
 
 
