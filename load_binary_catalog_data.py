@@ -111,7 +111,7 @@ galah_binaries_gaia_results, galah_binaries_flux_df, galah_binaries_sigma_df = g
 print('{} with has_rvs = True, rvs snr > 100'.format(len(galah_binaries_gaia_results)))
 
 print('saving flux, flux_err to .csv files')
-gaia.write_labels_to_file(galah_binaries_gaia, 'galah_binaries')
+gaia.write_labels_to_file(galah_binaries_gaia_results, 'galah_binaries')
 gaia.write_flux_data_to_csv(galah_binaries_flux_df, galah_binaries_sigma_df, 'galah_binaries')
 
 
