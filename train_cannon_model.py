@@ -8,7 +8,7 @@ import os
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'GaiaSNR100_GALAHSNR100_GALAHRUWECUT_GaiaRUWECUT'
+model_fileroot = 'gaia_rvs_model'
 
 ################# define training set + get labels ###################################################
 
@@ -91,6 +91,6 @@ plot.plot_one_to_one(
 	sigma_df,
 	model,
 	model_figure_path + 'one_to_one.png',
-	path_to_save_labels = model_fileroot + '_cannon_labels')
+	path_to_save_labels = 'training_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 

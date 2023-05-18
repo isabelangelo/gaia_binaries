@@ -152,7 +152,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 
 	def compute_cannon_labels(label_df, flux_df, sigma_df, model):
 
-		galah_keys = ['sobject_id'] + labels_to_plot + ['rvs_spec_sig_to_noise']
+		galah_keys = labels_to_plot + ['rvs_spec_sig_to_noise']
 
 		cannon_keys = [key.replace('galah','cannon') for key in labels_to_plot] + \
 		['cannon_chi_sq', 'cannon_r_chi_sq']
@@ -172,8 +172,8 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 			cannon_labels = [teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit, \
 			result[2][0]['chi_sq'], result[2][0]['r_chi_sq']]
 			# convert to dictionary
-			keys = galah_keys + cannon_keys
-			values = galah_labels + cannon_labels
+			keys = ['source_id'] + galah_keys + cannon_keys
+			values = [source_id] + galah_labels + cannon_labels
 			cannon_label_data.append(dict(zip(keys, values)))
 		cannon_label_df = pd.DataFrame(cannon_label_data)
 		return cannon_label_df
