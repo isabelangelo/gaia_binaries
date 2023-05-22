@@ -80,6 +80,7 @@ training_set_labels = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', '
 galah_binaries_gaia = galah_binaries_gaia.dropna(subset=training_set_labels)
 print(len(galah_binaries_gaia), 'with finite training set labels')
 
+
 # filters to remove stars with label uncertainties >2*median GALAH uncertainty
 # and require GALAH logg>4
 def emax(colname):
@@ -90,10 +91,10 @@ emax_logg = emax('e_logg')
 emax_feh = emax('e_fe_h')
 emax_alpha = emax('e_alpha_fe')
 emax_vbroad = emax('e_vbroad')
-galah_binaries_gaia = galah_binaries_gaia.query('galah_logg > 4 & galah_eteff<@emax_teff & galah_elogg<@emax_logg \
-            & galah_efeh<@emax_feh & galah_ealpha<@emax_alpha\
-            & galah_evbroad<@emax_vbroad')
-print(len(galah_binaries_gaia), 'with logg>4, uncertainties < 2x median galah uncertainties')
+galah_binaries_gaia = galah_binaries_gaia.query('galah_logg1 > 4 & galah_logg2 > 4 & \
+    galah_eteff<@emax_teff & galah_elogg<@emax_logg & galah_efeh<@emax_feh & \
+    galah_ealpha<@emax_alpha & galah_evbroad<@emax_vbroad')
+print(len(galah_binaries_gaia), 'with logg1,2>4, uncertainties < 2x median galah uncertainties')
 
 ########### upload to gaia to filter + download RVS spectra ##################################
 # query to filter based on Gaia parameters + download RVS spectra
@@ -112,7 +113,7 @@ AND dr3.rvs_spec_sig_to_noise > 100 \
 AND dr3.ruwe < 1.4"
 
 # download gaia data and save to files
-# gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
+gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
 galah_binaries_gaia_results, galah_binaries_flux_df, galah_binaries_sigma_df = gaia.retrieve_data_and_labels(query)
 print('{} with has_rvs = True, rvs snr > 100'.format(len(galah_binaries_gaia_results)))
 
