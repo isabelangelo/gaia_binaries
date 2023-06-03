@@ -8,11 +8,9 @@ import os
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'gaia_rvs_model_iter1'
+model_fileroot = 'gaia_rvs_model'
 
 ################# define training set + get labels ###################################################
-
-######## original code
 # define training set labels
 training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 
@@ -24,27 +22,6 @@ training_set = training_set_table[training_labels]
 normalized_flux = fits.open('./data/cannon_training_data/training_flux.fits')[0].data
 normalized_sigma = fits.open('./data/cannon_training_data/training_sigma.fits')[0].data
 normalized_ivar = 1/normalized_sigma**2
-
-########## temporary code to remove double-lined spectra from training set ##################
-# remove rows from training_set_table/training_set
-source_ids_to_remove = np.array(
-	[  45159901786885632, 4659752788457255680, 4659717191768610048,
-       5290699220986252672, 6003031637355425024, 4659672455396668032,
-       2640446563872840448, 4659721555451851648, 5248064420669356800,
-       5431592977432228992,  665979316843244032, 3613579672317409792,
-       5219351911459314048, 4674845677179118592, 6009262299183032704,
-       5228039324634562304, 4247876763478309760, 3312575685471393664,
-       5285293334627407872, 2306216916182228224, 5280746441729415808,
-       3113219383954556416,  665338954397829888, 5374505131129034752,
-       5290900569051575424, 5431981860950849024, 3312899491645515776])
-source_ids_to_keep = [i for i in training_set_table['source_id'] if i not in source_ids_to_remove]
-df = training_set_table.to_pandas()
-indices_to_keep = df.loc[df.source_id.isin(source_ids_to_keep)].col0.to_numpy()
-training_set = Table.from_pandas(df.loc[df.source_id.isin(source_ids_to_keep)])[training_labels]
-normalized_flux = normalized_flux[indices_to_keep]
-normalized_ivar = 1/normalized_sigma[indices_to_keep]**2
-
-###############################################################################################
 
 
 # Create a vectorizer that defines our model form.
@@ -113,6 +90,6 @@ plot.plot_one_to_one(
 	sigma_df,
 	model,
 	model_figure_path + 'one_to_one.png',
-	path_to_save_labels = 'training_labels')
+	path_to_save_labels = model_fileroot+'_training_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 

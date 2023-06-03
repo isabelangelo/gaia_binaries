@@ -20,10 +20,6 @@ galah_binary_catalog = catalogs[0].to_pandas()
 
 # following GALAH website best practices for clean star catalog
 print(len(galah_allstar_catalog), 'GALAH stars in allstar catalog')
-galah_allstar_catalog_cleaned = galah_allstar_catalog.query('(snr_c3_iraf > 100) & (flag_sp == 0) \
-& (flag_fe_h == 0) & (flag_alpha_fe == 0) & (ruwe_dr2 < 1.4)')
-print(len(galah_allstar_catalog_cleaned), 'remaining after cleaning based on GALAH SNR + quality flags')
-
 # reformat Gaia designation column
 galah_gaia_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in galah_gaia_xmatch['designation']]
 
@@ -34,7 +30,7 @@ galah_allstar_catalog_cols = ['sobject_id', 'star_id', 'teff', 'e_teff', 'logg',
                              'alpha_fe', 'e_alpha_fe','vbroad', 'e_vbroad','v_jk']
 galah_gaia_xmatch_cols = ['sobject_id', 'designation']
 
-galah_binaries_allstar = pd.merge(galah_binary_catalog, galah_allstar_catalog_cleaned[galah_allstar_catalog_cols], 
+galah_binaries_allstar = pd.merge(galah_binary_catalog, galah_allstar_catalog[galah_allstar_catalog_cols], 
     left_on='spectID', right_on='sobject_id', validate='one_to_one')
 galah_binaries_gaia = pd.merge(galah_binaries_allstar, galah_gaia_xmatch[galah_gaia_xmatch_cols], 
 	on='sobject_id', validate='one_to_one')
@@ -72,29 +68,16 @@ galah_binaries_gaia = galah_binaries_gaia.rename(
     'logg2-50':'galah_logg2',
     'vbroad2-50':'galah_vbroad2',
     'RV1-50':'galah_rv1',
-    'RV2-50':'galah_rv2'
+    'RV2-50':'galah_rv2',
+    'R1-50':'galah_R1',
+    'R2-50':'galah_R2',
+    'ratio4-50':'galah_fluxratio'
     })
 
-# require GALAH labels to be finite
-training_set_labels = ['galah_teff', 'galah_logg', 'galah_feh', 'galah_alpha', 'galah_vbroad']
-galah_binaries_gaia = galah_binaries_gaia.dropna(subset=training_set_labels)
-print(len(galah_binaries_gaia), 'with finite training set labels')
+# print(len(galah_binaries_gaia), 'with logg1,2>4, uncertainties < 2x median galah uncertainties')
+galah_binaries_gaia = galah_binaries_gaia.query('galah_logg1 > 4 & galah_logg2 > 4')
+print(len(galah_binaries_gaia), 'with logg1,2>4')
 
-
-# filters to remove stars with label uncertainties >2*median GALAH uncertainty
-# and require GALAH logg>4
-def emax(colname):
-    return 2*np.nanmedian(galah_allstar_catalog[colname])
-# using original column names to filter based on errors in GALAH allstars
-emax_teff = emax('e_teff') 
-emax_logg = emax('e_logg')
-emax_feh = emax('e_fe_h')
-emax_alpha = emax('e_alpha_fe')
-emax_vbroad = emax('e_vbroad')
-galah_binaries_gaia = galah_binaries_gaia.query('galah_logg1 > 4 & galah_logg2 > 4 & \
-    galah_eteff<@emax_teff & galah_elogg<@emax_logg & galah_efeh<@emax_feh & \
-    galah_ealpha<@emax_alpha & galah_evbroad<@emax_vbroad')
-print(len(galah_binaries_gaia), 'with logg1,2>4, uncertainties < 2x median galah uncertainties')
 
 ########### upload to gaia to filter + download RVS spectra ##################################
 # query to filter based on Gaia parameters + download RVS spectra
@@ -103,19 +86,18 @@ galah.galah_teff, galah.galah_eteff, galah.galah_logg, galah.galah_elogg, \
 galah.galah_feh, galah.galah_efeh, galah.galah_alpha, galah.galah_ealpha, \
 galah.galah_vbroad, galah.galah_evbroad, galah.galah_teff1,  galah.galah_logg1,  \
 galah.galah_feh12,  galah.galah_vbroad1, galah.galah_teff2, galah.galah_logg2,  \
-galah.galah_vbroad2, galah.galah_rv1, galah.galah_rv2, \
-dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec \
+galah.galah_vbroad2, galah.galah_rv1, galah.galah_rv2, galah_R1, galah_R2,\
+galah_fluxratio, dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec \
 FROM user_iangelo.galah_binaries_gaia as galah \
 JOIN gaiadr3.gaia_source as dr3 \
     ON dr3.designation = galah.designation \
 WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 100 \
-AND dr3.ruwe < 1.4"
+AND dr3.rvs_spec_sig_to_noise > 50"
 
 # download gaia data and save to files
 gaia.upload_table(galah_binaries_gaia, 'galah_binaries_gaia')
 galah_binaries_gaia_results, galah_binaries_flux_df, galah_binaries_sigma_df = gaia.retrieve_data_and_labels(query)
-print('{} with has_rvs = True, rvs snr > 100'.format(len(galah_binaries_gaia_results)))
+print('{} with has_rvs = True, rvs snr > 50'.format(len(galah_binaries_gaia_results)))
 
 print('saving flux, flux_err to .csv files')
 gaia.write_labels_to_file(galah_binaries_gaia_results, 'galah_binaries')
