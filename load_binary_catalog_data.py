@@ -18,7 +18,7 @@ Vizier.ROW_LIMIT = -1
 catalogs = Vizier.get_catalogs(catalogs.keys())
 galah_binary_catalog = catalogs[0].to_pandas()
 
-# following GALAH website best practices for clean star catalog
+# print number of stars in allstar catalog
 print(len(galah_allstar_catalog), 'GALAH stars in allstar catalog')
 # reformat Gaia designation column
 galah_gaia_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in galah_gaia_xmatch['designation']]
@@ -74,7 +74,7 @@ galah_binaries_gaia = galah_binaries_gaia.rename(
     'ratio4-50':'galah_fluxratio'
     })
 
-# print(len(galah_binaries_gaia), 'with logg1,2>4, uncertainties < 2x median galah uncertainties')
+# filters to require GALAH logg>4
 galah_binaries_gaia = galah_binaries_gaia.query('galah_logg1 > 4 & galah_logg2 > 4')
 print(len(galah_binaries_gaia), 'with logg1,2>4')
 
@@ -104,8 +104,8 @@ gaia.write_labels_to_file(galah_binaries_gaia_results, 'galah_binaries')
 gaia.write_flux_data_to_csv(galah_binaries_flux_df, galah_binaries_sigma_df, 'galah_binaries')
 
 
-
-
+# now I'm going to run this, hopefully it works?
+# it was taking a while before.
 
 
 
