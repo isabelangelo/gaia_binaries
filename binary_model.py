@@ -1,56 +1,24 @@
 import thecannon as tc
-import astropy.constants as c
-import astropy.units as u
-import numpy as np
-import pandas as pd
-from scipy.interpolate import interp1d
+from binary_model_supplementary_functions import *
+from scipy.optimize import leastsq
 from astropy.io import fits
 
 # load single star cannon model + wavelength
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
 single_star_model = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
 
-# speed of light for doppler shift calculation
-speed_of_light_kms = c.c.to(u.km/u.s).value
-
-# load data from Pecuat & Mamajek for flux/magnitude calculations
-pm2013 = pd.read_csv('./data/literature_tables/PecautMamajek_table.csv', 
-                    delim_whitespace=True).replace('...',np.nan)
-
-# get Vmag, V-I flux from Pecaut & Mamajek
-teff_pm2013 = np.array([float(i) for i in pm2013['Teff']])
-VminusI_pm2013 = np.array([float(i) for i in pm2013['V-Ic']])
-V_pm2013 = np.array([float(i) for i in pm2013['Mv']])
-mass_pm2013 = np.array([float(i) for i in pm2013['Msun']])
-teff2Vmag = interp1d(teff_pm2013, V_pm2013)
-
-# interpolate between columns
-valid_mass = ~np.isnan(mass_pm2013)
-teff2Vmag = interp1d(teff_pm2013[valid_mass], V_pm2013[valid_mass])
-teff2VminusI = interp1d(teff_pm2013[valid_mass],VminusI_pm2013[valid_mass])
-
-def flux_weights(teff1, teff2):
-    # compute relative I band flux > flux ratio
-    I1 = teff2Vmag(teff1) - teff2VminusI(teff1)
-    I2 = teff2Vmag(teff2) - teff2VminusI(teff2)
-    f1_over_f2 = 10**((I2-I1)/2.5)
-    flux2_weight = 1/(1+f1_over_f2)
-    flux1_weight = 1-flux2_weight
-    return(flux1_weight, flux2_weight)
-
 
 # function to call binary model
-def binary_model(param1, param2, drv):
+def binary_model(param1, param2, return_components=False):
 	"""
-	param1 : list of primary cannon labels
-	param2 : teff, logg, and vbroad of secondary
-	drv : relative rv of stars in binary 
-	(primary is assumed to be in the rest frame)
+	param1 : teff, logg, feh, alpha, vbroad and RV of primary
+	param2 : teff, logg, vbroad and RV of secondary
+	note: feh, alpha of secondary are assumed to be the same as the primary
 	"""
 
 	# store primary, secondary labels
-	teff1, logg1, feh1, alpha1, vbroad1 = param1
-	teff2, logg2, vbroad2 = param2
+	teff1, logg1, feh1, alpha1, vbroad1, rv1 = param1
+	teff2, logg2, vbroad2, rv2 = param2
 
 	# assume same metallicity for both components
 	feh2, alpha2 = feh1, alpha1 
@@ -60,13 +28,73 @@ def binary_model(param1, param2, drv):
 	flux2 = single_star_model([teff2, logg2, feh2, alpha2, vbroad2])
 
 	# shift flux2 according to drv
-	delta_w = w * drv/speed_of_light_kms
-	w_shifted = w + delta_w
-	flux2_shifted = np.interp(w, w_shifted, flux2)
+	delta_w1 = w * rv1/speed_of_light_kms
+	delta_w2 = w * rv2/speed_of_light_kms
+	flux1_shifted = np.interp(w, w + delta_w1, flux1)
+	flux2_shifted = np.interp(w, w + delta_w2, flux2)
+
 
 	# compute relative flux based on spectral type
 	flux1_weight, flux2_weight = flux_weights(teff1, teff2)
 
 	# add weighted spectra together
-	flux_combined = flux1_weight*flux1 + flux2_weight*flux2_shifted
-	return flux_combined
+	flux_combined = flux1_weight*flux1_shifted + flux2_weight*flux2_shifted
+
+	if return_components:
+		return flux1_weight*flux1_shifted, flux2_weight*flux2_shifted, flux_combined
+	else:
+		return flux_combined
+
+
+# fit single star
+def fit_single_star(flux, sigma):
+
+	# single star model goodness-of-fit
+	def chisq_single(param):
+		# if training_set_density(single_params)==0:
+		#     # print(single_params, 'retuning inf')
+		#     return np.inf*np.ones(len(flux))
+		# else:
+		#     # print(single_params)
+		if 4000>param[0] or 7000<param[0]:
+			return np.inf*np.ones(len(flux))
+		else:
+			model = single_star_model(param)
+			sq_resid = (flux - model)**2/sigma**2
+			return sq_resid
+
+	initial_labels = single_star_model._fiducials
+	fit_labels = leastsq(chisq_single,x0=initial_labels)[0]
+	return fit_labels, np.sum(chisq_single(fit_labels))
+
+
+# fit binary
+def fit_binary(flux, sigma):
+	# binary model goodness-of-fit
+	def chisq_binary(params):
+		param1 = params[:6]
+		param2 = params[6:]
+		param2_full = np.concatenate((param2[:2],param1[2:4],param2[2:3]))
+		# if training_set_density(param1[:-1])<0.1:
+		#     return np.inf*np.ones(len(flux))
+		# if training_set_density(param2_full)<0.1:
+		#     return np.inf*np.ones(len(flux))
+		# else:
+		if 4000>param1[0] or 7000<param1[0]:
+			return np.inf*np.ones(len(flux))
+		elif 4000>param2[0] or 7000<param2[0]:
+			return np.inf*np.ones(len(flux))
+		else:
+			model = binary_model(param1, param2)
+			sq_resid = (flux - model)**2/sigma**2
+			return sq_resid
+
+	initial_labels = [6000,4.3,-0.03,0.0,7,0,5800,4.2,5,0]
+	fit_labels = leastsq(chisq_binary,x0=initial_labels)[0]
+	return fit_labels, np.sum(chisq_binary(fit_labels))
+
+	    
+
+
+
+
