@@ -10,6 +10,11 @@ model_figure_path = './data/binary_models/'+model_fileroot+'_figures/'
 # os.mkdir(model_figure_path)
 
 def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
+	"""
+	Plot data + best fit binary and single star models
+	for an object with a given source_id
+	saves to file in ./data/binary_models/[model fileroot]_figures/
+	"""
 
 	# color codes for plot
 	primary_color='#91A8D6'
@@ -79,15 +84,93 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	figure_path = model_figure_path + object_type_str + '_test_case.png'
 	plt.savefig(figure_path, dpi=300)
 
+def plot_binary_metric_distributions():
+
+	# load data for control sample
+	control_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_dopplegangers_flux.csv')
+	control_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_dopplegangers_sigma.csv')
+	control_label_df = pd.read_csv('./data/galah_label_dataframes/galah_dopplegangers_labels.csv')
+	# load data for binary sample
+	binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_flux.csv')
+	binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_sigma.csv')
+	binary_label_df = pd.read_csv('./data/galah_label_dataframes/galah_binaries_labels.csv')
+
+	def compute_metrics(flux_df, sigma_df, label_df):
+
+		# iterate over control sample source IDs
+		metric_data = []
+		metric_keys = ['single_chisq', 'delta_chisq', 'training_density']
+		for source_id in label_df.source_id.to_numpy():
+			source_id = str(source_id)
+			flux = flux_df[source_id]
+			sigma = sigma_df[source_id]
+
+			# fit a binary and secondary to the data
+			single_fit_labels, single_fit_chisq = fit_single_star(flux, sigma)
+			binary_fit_labels, binary_fit_chisq = fit_binary(flux, sigma)
+
+			# refine relevant metrics
+			delta_chisq = single_fit_chisq - binary_fit_chisq
+			training_density = training_set_density(single_fit_labels)
+
+			# save metrics
+			metric_values = [single_fit_chisq, delta_chisq, training_density]
+			metric_data.append(dict(zip(metric_keys, metric_values)))
+
+		metric_df = pd.DataFrame(metric_data)
+		return metric_df
+
+	control_metric_df = compute_metrics(control_flux_df, control_sigma_df, control_label_df)
+	binary_metric_df = compute_metrics(binary_flux_df, binary_sigma_df, binary_label_df)
+
+	# plot figure
+	plt.rcParams['font.size']=15
+	binary_color = '#EE5656'
+
+	plt.figure(figsize=(17,10))
+	plt.subplot(131)
+	log_single_chisq_bins = np.linspace(3.2,4,40)
+	plt.hist(np.log10(control_metric_df.single_chisq.to_numpy()), bins=log_single_chisq_bins,
+	    histtype='step', color='k')
+	plt.hist(np.log10(binary_metric_df.single_chisq.to_numpy()), bins=log_single_chisq_bins,
+	    histtype='step', color=binary_color, lw=2.5)
+	plt.text(3.6,38,'single stars', fontsize=19)
+	plt.text(3.7,34,'binaries', color=binary_color, fontsize=19)
+	plt.ylabel('number of systems', fontsize=20)
+	plt.xlabel(r'log ( $\chi^2_{\rm single}$ )', fontsize=20, labelpad=15)
+
+	plt.subplot(132)
+	log_delta_chisq_bins = np.linspace(-3,3,40)
+	plt.hist(np.log10(control_metric_df.delta_chisq.to_numpy()), bins=log_delta_chisq_bins, 
+	    histtype='step', color='k')
+	plt.hist(np.log10(binary_metric_df.delta_chisq.to_numpy()), bins=log_delta_chisq_bins, 
+	    histtype='step', color=binary_color, lw=2.5)
+	plt.xlabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )', fontsize=20, labelpad=15)
+
+	plt.subplot(133)
+	training_density_bins=np.linspace(0,10, 40)
+	plt.hist(control_metric_df.training_density.to_numpy(), bins=training_density_bins,
+	    histtype='step', color='k')
+	plt.hist(binary_metric_df.training_density.to_numpy(), bins=training_density_bins,
+	    histtype='step', color=binary_color, lw=2.5)
+	plt.xlabel('training set\nneighbor density', fontsize=20, labelpad=10)
+
+	figure_path = model_figure_path + 'metric_distributions.png'
+	plt.savefig(figure_path, dpi=300)
+
+
 # model comparison for individual test cases
 binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_flux.csv')
 binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_sigma.csv')
 test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
 test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
-
 plot_model_comparison(153768354707949056, binary_flux_df, binary_sigma_df, 'binary') # normal binary
 plot_model_comparison(5367424413685522688, binary_flux_df, binary_sigma_df, 'active_binary') # Ca emission + absorption binary
 plot_model_comparison(3798460353505152384, test_flux_df, test_sigma_df, 'single_star') # normal single star
 
+# historgram of different binary detection metrics
+# note: maybe at one point I'll want this function to take input samples
+# so I can easily compare two different samples
+plot_binary_metric_distributions()
 
 
