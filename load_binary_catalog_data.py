@@ -104,8 +104,4 @@ gaia.write_labels_to_file(galah_binaries_gaia_results, 'galah_binaries')
 gaia.write_flux_data_to_csv(galah_binaries_flux_df, galah_binaries_sigma_df, 'galah_binaries')
 
 
-# now I'm going to run this, hopefully it works?
-# it was taking a while before.
-
-
 

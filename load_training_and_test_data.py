@@ -100,7 +100,8 @@ JOIN gaiadr3.gaia_source as dr3 \
 	ON dr3.designation = galah.designation \
 WHERE dr3.has_rvs = 'True' \
 AND dr3.rvs_spec_sig_to_noise > 100 \
-AND dr3.ruwe < 1.4"
+AND dr3.ruwe < 1.4 \
+AND dr3.non_single_star = 0"
 
 # query gaia and download RVS spectra, save to dataframes
 gaia.upload_table(galah_stars_gaia, 'galah_stars_gaia')
