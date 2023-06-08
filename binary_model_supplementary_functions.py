@@ -42,11 +42,16 @@ def training_set_density(cannon_params):
     teff, logg, feh, alpha, vbroad = cannon_params
 
     # these are kind of randomly chosen at the momend
-    teff_window = 100
-    logg_window = 0.1
-    feh_window = 0.1
+    # teff_window = 100
+    # logg_window = 0.1
+    # feh_window = 0.1
+    # alpha_window = 0.1
+    # vbroad_window = 5
+    teff_window = 500
+    logg_window = 0.25
+    feh_window = 0.25
     alpha_window = 0.1
-    vbroad_window = 5
+    vbroad_window = 10
 
     training_neighbors = training_label_df.query(
         'galah_teff < @teff+@teff_window & galah_teff > @teff-@teff_window \
