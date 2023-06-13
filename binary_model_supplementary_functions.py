@@ -45,8 +45,8 @@ def spec_mask(sigma_series):
 
     # set errors for masked values to 1
     sigma_mask = sigma_series.copy()
-    sigma_mask.iloc[:3] = 1
-    sigma_mask.iloc[-3:] = 1
+    sigma_mask.iloc[:5] = 1
+    sigma_mask.iloc[-5:] = 1
 
     # mask out Ca features
     ca_idx1 = np.where((w>849.9) & (w<850.2))[0]
