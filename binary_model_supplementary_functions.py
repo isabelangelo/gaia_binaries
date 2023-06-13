@@ -2,6 +2,7 @@ import astropy.constants as c
 import astropy.units as u
 import pandas as pd
 import numpy as np
+from astropy.io import fits
 from scipy.interpolate import interp1d
 
 ########## calculate relative flux weights of primary,secondary ###############
@@ -24,6 +25,7 @@ teff2Vmag = interp1d(teff_pm2013, V_pm2013)
 valid_mass = ~np.isnan(mass_pm2013)
 teff2Vmag = interp1d(teff_pm2013[valid_mass], V_pm2013[valid_mass])
 teff2VminusI = interp1d(teff_pm2013[valid_mass],VminusI_pm2013[valid_mass])
+teff2mass = interp1d(teff_pm2013[valid_mass], mass_pm2013[valid_mass])
 
 def flux_weights(teff1, teff2):
     # compute relative I band flux > flux ratio
@@ -33,6 +35,27 @@ def flux_weights(teff1, teff2):
     flux2_weight = 1/(1+f1_over_f2)
     flux1_weight = 1-flux2_weight
     return(flux1_weight, flux2_weight)
+
+
+######### mask sigma array for chi2 calculation ############################################
+# load single star cannon model + wavelength
+w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
+
+def spec_mask(sigma_series):
+
+    # set errors for masked values to 1
+    sigma_mask = sigma_series.copy()
+    sigma_mask.iloc[:3] = 1
+    sigma_mask.iloc[-3:] = 1
+
+    # mask out Ca features
+    ca_idx1 = np.where((w>849.9) & (w<850.2))[0]
+    ca_idx2 = np.where((w>854.3) & (w<854.6))[0]
+    ca_idx3 = np.where((w>866.3) & (w<866.6))[0]
+    ca_idx = list(ca_idx1) + list(ca_idx2) + list(ca_idx3)
+    sigma_mask.iloc[ca_idx] = 1
+
+    return sigma_mask
 
 
 ########## compute density of training set for a given set of model parameters ########## 

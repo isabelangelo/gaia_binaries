@@ -1,3 +1,4 @@
+
 import thecannon as tc
 from binary_model_supplementary_functions import *
 from scipy.optimize import leastsq
@@ -6,6 +7,12 @@ from astropy.io import fits
 # load single star cannon model + wavelength
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
 single_star_model = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
+
+ca_idx1 = np.where((w>849) & (w<851))[0]
+ca_idx2 = np.where((w>853.5) & (w<855.5))[0]
+ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
+ca_idx = list(ca_idx1) + list(ca_idx2) + list(ca_idx3)
+spec_idx = np.array([i for i in range(len(w)) if i not in ca_idx])
 
 
 # function to call binary model
@@ -51,11 +58,6 @@ def fit_single_star(flux, sigma):
 
 	# single star model goodness-of-fit
 	def chisq_single(param):
-		# if training_set_density(single_params)==0:
-		#     # print(single_params, 'retuning inf')
-		#     return np.inf*np.ones(len(flux))
-		# else:
-		#     # print(single_params)
 		if 4000>param[0] or 7000<param[0]:
 			return np.inf*np.ones(len(flux))
 		else:
@@ -70,16 +72,12 @@ def fit_single_star(flux, sigma):
 
 # fit binary
 def fit_binary(flux, sigma):
+
 	# binary model goodness-of-fit
 	def chisq_binary(params):
 		param1 = params[:6]
 		param2 = params[6:]
 		param2_full = np.concatenate((param2[:2],param1[2:4],param2[2:3]))
-		# if training_set_density(param1[:-1])<0.1:
-		#     return np.inf*np.ones(len(flux))
-		# if training_set_density(param2_full)<0.1:
-		#     return np.inf*np.ones(len(flux))
-		# else:
 		if 4000>param1[0] or 7000<param1[0]:
 			return np.inf*np.ones(len(flux))
 		elif 4000>param2[0] or 7000<param2[0]:

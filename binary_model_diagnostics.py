@@ -1,3 +1,7 @@
+
+# I don't like the way this code is
+# I think I just need to write a function to mask the sigma array.
+
 from binary_model import *
 import matplotlib.pyplot as plt
 import os
@@ -5,7 +9,7 @@ plt.rcParams['font.size']=12
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'binary_model_full'
+model_fileroot = 'binary_model_Ca_masked'
 model_figure_path = './data/binary_models/'+model_fileroot+'_figures/'
 # os.mkdir(model_figure_path)
 
@@ -25,7 +29,7 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	# load flux
 	source_id = str(source_id)
 	flux = flux_df[source_id]
-	sigma = sigma_df[source_id]
+	sigma = spec_mask(sigma_df[source_id])
 
 	# fit single star to data
 	single_fit_labels, single_fit_chi2 = fit_single_star(flux, sigma)
@@ -42,7 +46,8 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 
 	# compute dRV, mass ratio of best-fit binary
 	drv_fit = np.round(np.abs(secondary_fit_labels[-1] - primary_fit_labels[-1]), decimals=1)
-	q_fit = np.round(teff2mass(primary_fit_labels[0])/teff2mass(secondary_fit_labels[0]), decimals=2)
+	q_fit = np.round(teff2mass(secondary_fit_labels[0])/teff2mass(primary_fit_labels[0]), decimals=2)
+	density_fit = np.round(training_set_density(single_fit_labels), decimals=2)
 
 	# plot figure
 	plt.figure(figsize=(15,10))
@@ -54,7 +59,7 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	plt.text(863,1.1,'Gaia DR3 {}'.format(source_id), color='k')
 	plt.text(847,0.2,'model primary', color=primary_color)
 	plt.text(847,0.1,'model secondary', color=secondary_color)
-	plt.text(847,1.1,'model binary: $\Delta$RV={} km/s, m$_2$/m$_1$={}'.format(
+	plt.text(847,1.1,'model binary: $\Delta$RV={} km/s, m$_2$/m$_1$={}, '.format(
 		drv_fit, q_fit), color=binary_fit_color)
 	plt.ylabel('normalized\nflux')
 	plt.tick_params(axis='x', direction='inout', length=15)
@@ -67,8 +72,10 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	     color=single_fit_color)
 	plt.text(850.5,0.1,'best-fit binary\n$\chi^2={}$'.format(np.round(binary_fit_chi2,2)),
 	     color=binary_fit_color)
-	plt.text(853.3,0.2,'$\Delta\chi^2={}$'.format(np.round(single_fit_chi2-binary_fit_chi2,2)),
-	     color='dimgrey')
+	plt.text(853.3,0.1,'$\Delta\chi^2={},\ntraining density={}$'.format(
+		np.round(single_fit_chi2-binary_fit_chi2,2),
+		density_fit),
+	color='dimgrey')
 	plt.ylabel('normalized\nflux')
 	plt.tick_params(axis='x', direction='inout', length=15)
 
@@ -99,11 +106,11 @@ def plot_binary_metric_distributions():
 
 		# iterate over control sample source IDs
 		metric_data = []
-		metric_keys = ['single_chisq', 'delta_chisq', 'training_density']
+		metric_keys = ['single_chisq', 'delta_chisq', 'training_density', 'f_imp']
 		for source_id in label_df.source_id.to_numpy():
 			source_id = str(source_id)
 			flux = flux_df[source_id]
-			sigma = sigma_df[source_id]
+			sigma = spec_mask(sigma_df[source_id])
 
 			# fit a binary and secondary to the data
 			single_fit_labels, single_fit_chisq = fit_single_star(flux, sigma)
@@ -113,8 +120,20 @@ def plot_binary_metric_distributions():
 			delta_chisq = single_fit_chisq - binary_fit_chisq
 			training_density = training_set_density(single_fit_labels)
 
+			# I need the binary flux and single star model flux
+			single_fit  = single_star_model(single_fit_labels)
+			primary_fit_labels = binary_fit_labels[:6]
+			secondary_fit_labels = binary_fit_labels[6:]
+			primary_fit, secondary_fit, binary_fit = binary_model(
+				primary_fit_labels, 
+				secondary_fit_labels,
+				return_components=True)
+			numerator = np.sum((np.abs(single_fit - flux) - np.abs(binary_fit - flux))/sigma)
+			denominator = np.sum(np.abs(single_fit - binary_fit)/sigma)
+			f_imp = numberator/denominator
+
 			# save metrics
-			metric_values = [single_fit_chisq, delta_chisq, training_density]
+			metric_values = [single_fit_chisq, delta_chisq, training_density, f_imp]
 			metric_data.append(dict(zip(metric_keys, metric_values)))
 
 		metric_df = pd.DataFrame(metric_data)
@@ -127,8 +146,8 @@ def plot_binary_metric_distributions():
 	plt.rcParams['font.size']=15
 	binary_color = '#EE5656'
 
-	plt.figure(figsize=(17,10))
-	plt.subplot(131)
+	plt.figure(figsize=(20,5));plt.tight_layout()
+	plt.subplot(141)
 	log_single_chisq_bins = np.linspace(3.2,4,40)
 	plt.hist(np.log10(control_metric_df.single_chisq.to_numpy()), bins=log_single_chisq_bins,
 	    histtype='step', color='k')
@@ -139,7 +158,7 @@ def plot_binary_metric_distributions():
 	plt.ylabel('number of systems', fontsize=20)
 	plt.xlabel(r'log ( $\chi^2_{\rm single}$ )', fontsize=20, labelpad=15)
 
-	plt.subplot(132)
+	plt.subplot(142)
 	log_delta_chisq_bins = np.linspace(-3,3,40)
 	plt.hist(np.log10(control_metric_df.delta_chisq.to_numpy()), bins=log_delta_chisq_bins, 
 	    histtype='step', color='k')
@@ -147,7 +166,7 @@ def plot_binary_metric_distributions():
 	    histtype='step', color=binary_color, lw=2.5)
 	plt.xlabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )', fontsize=20, labelpad=15)
 
-	plt.subplot(133)
+	plt.subplot(143)
 	training_density_bins=np.linspace(0,10, 40)
 	plt.hist(control_metric_df.training_density.to_numpy(), bins=training_density_bins,
 	    histtype='step', color='k')
@@ -155,8 +174,42 @@ def plot_binary_metric_distributions():
 	    histtype='step', color=binary_color, lw=2.5)
 	plt.xlabel('training set\nneighbor density', fontsize=20, labelpad=10)
 
+	plt.subplot(144)
+	f_imp_bins=np.linspace(-0.4,1.2,40)
+	plt.hist(control_metric_df.f_imp.to_numpy(), bins=f_imp_bins,
+	    histtype='step', color='k')
+	plt.hist(binary_metric_df.f_imp.to_numpy(), bins=f_imp_bins,
+	    histtype='step', color=binary_color, lw=2.5)
+	plt.xlabel(r'$f_{\rm imp}$', fontsize=20, labelpad=10)
+
 	figure_path = model_figure_path + 'metric_distributions.png'
 	plt.savefig(figure_path, dpi=300)
+
+	plt.figure(figsize=(15,5));plt.tight_layout()
+
+	plt.subplot(121)
+	plt.scatter(
+		binary_metric_df.single_chisq.to_numpy(), 
+		binary_metric_df.delta_chisq.to_numpy()/binary_metric_df.single_chisq.to_numpy(),
+		c = binary_metric_df.training_density.to_numpy(),
+		vmin=0, vmax=6)
+	plt.xscale('log');plt.yscale('log')
+	plt.xlabel(r'$\chi^2_{\rm single}$');plt.ylabel(r'$\Delta \chi^2 / \chi^2_{\rm single}$')
+	
+
+	plt.subplot(122)
+	plt.scatter(
+		binary_metric_df.single_chisq.to_numpy(), 
+		binary_metric_df.single_chisq.to_numpy() - binary_metric_df.delta_chisq.to_numpy(),
+		c = binary_metric_df.training_density.to_numpy(),
+		vmin=0, vmax=6)
+	plt.colorbar(label='training set neighbor density ')
+	plt.xscale('log');plt.yscale('log')
+	plt.xlabel(r'$\chi^2_{\rm single}$');plt.ylabel(r'$\chi^2_{\rm binary}$')
+
+	figure_path = model_figure_path + '2D_binary_metrics.png'
+	plt.savefig(figure_path, dpi=300)
+
 
 
 # model comparison for individual test cases

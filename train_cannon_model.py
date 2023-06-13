@@ -1,5 +1,5 @@
 import numpy as np 
-import plot
+import cannon_model_diagnostics
 from astropy.table import Table
 from astropy.io import fits
 import thecannon as tc
@@ -49,26 +49,27 @@ for label in training_labels:
 model_figure_path = './data/cannon_models/'+model_fileroot+'_figures/'
 os.mkdir(model_figure_path)
 
-# commenting this out for now since it's pretty redundant with the one-to-one plot
-# but it might be useful if I need a plot of just the training set later on
+# plot histograms of training + test sets
 test_set = pd.read_csv('./data/galah_label_dataframes/test_labels.csv')
 training_histogram_filename = model_figure_path + 'training_set_plot.png'
-plot.plot_training_set(
+cannon_model_diagnostics.plot_training_set(
 	training_set.to_pandas(), 
 	test_set, 
 	training_histogram_filename)
 print('training set histrogram saved to {}'.format(training_histogram_filename))
 
+# training set parameter space corner plot for 3 test spectra
 example_top_filename = model_figure_path + 'example_spec_top_panel.png'
-plot.plot_example_spec_top_panel(
+cannon_model_diagnostics.plot_example_spec_top_panel(
 	training_set.to_pandas(), 
 	example_top_filename)
 print('top panel of example spectrum plot saved to {}'.format(example_top_filename))
 
+# cannon model fits for 3 test spectra
 flux_df = pd.read_csv('./data/gaia_rvs_dataframes/training_flux.csv')
 sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma.csv')
 example_bottom_filename = model_figure_path +  'example_spec_bottom_panel.png'
-plot.plot_example_spec_bottom_panel(
+cannon_model_diagnostics.plot_example_spec_bottom_panel(
 	training_set_table.to_pandas(),
 	flux_df,
 	sigma_df,
@@ -76,6 +77,7 @@ plot.plot_example_spec_bottom_panel(
 	example_bottom_filename)
 print('bottom panel of example spectrum plot saved to {}'.format(example_bottom_filename))
 
+# diagnostic plots from the cannon code
 theta_figure = tc.plot.theta(model)
 theta_figure.savefig(model_figure_path + 'theta.png', dpi=300)
 print('theta plot saved to {}'.format(model_figure_path + 'theta.png'))
@@ -84,7 +86,7 @@ scatter_figure = tc.plot.scatter(model)
 scatter_figure.savefig(model_figure_path + 'scatter.png', dpi=300)
 print('pixel scatter plot saved to {}'.format(model_figure_path + 'scatter.png'))
 
-plot.plot_one_to_one(
+cannon_model_diagnostics.plot_one_to_one(
 	training_set_table.to_pandas(),
 	flux_df,
 	sigma_df,
