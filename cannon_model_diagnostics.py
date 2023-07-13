@@ -1,4 +1,5 @@
 from astropy.io import fits
+import custom_model
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
@@ -34,7 +35,7 @@ def plot_training_set(training_label_df, test_label_df, figure_path):
 	plt.hist(training_label_df.galah_vbroad, color=ctr)
 	plt.hist(test_label_df.galah_vbroad, color=cte)
 	plt.subplots_adjust(hspace=0.3, wspace=0.4)
-	plt.savefig(figure_path, dpi=300)
+	plt.savefig(figure_path, dpi=300, bbox_inches='tight')
 
 
 def plot_example_spec_top_panel(training_label_df, figure_path):
@@ -83,7 +84,7 @@ def plot_example_spec_top_panel(training_label_df, figure_path):
 	plt.subplot(5,5,23);plt.xlabel('feh');plot_2d_dist('feh', 'vbroad')
 	plt.subplot(5,5,24);plt.xlabel('alpha_fe');plot_2d_dist('alpha', 'vbroad')
 	plt.subplot(5,5,25);plt.xlabel('vbroad');plot_hist('vbroad')
-	plt.savefig(figure_path, dpi=300)
+	plt.savefig(figure_path, dpi=300, bbox_inches='tight')
 
 
 
@@ -138,7 +139,7 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	plt.subplot(313);plot_spec(row4500, c4500)
 	plt.subplots_adjust(hspace=0)
 	plt.xlabel('wavelength (nm)')
-	plt.savefig(figure_path, dpi=300)
+	plt.savefig(figure_path, dpi=300, bbox_inches='tight')
 
 
 def plot_one_to_one(label_df, flux_df, sigma_df, model, 
@@ -146,6 +147,14 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 	"""
 	Plot a one-to-one comparison of the training set labels from GALAH and the Cannon
     labels inferred from the training set spectra.
+
+    Args:
+    	label_df (pd.Dataframe) : training labels of sample to plot (n_objects x n_labels)
+    	flux_df (pd.Dataframe) : flux of sample to plot (n_pixels x n_objects)
+    	sigma_df (pd.Dataframe) : sigma of sample to plot (n_pixels x n_objects)
+    	model (tc.CannonModel) : cannon model object to test
+    	figure_path (str) : full path to save plot to 
+    	path_to_save_labels (str) : full path to save injected + recovered labels, if given
 	"""
 	pc = 'k';markersize=1;alpha_value=0.5
 	labels_to_plot = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
@@ -154,27 +163,33 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 
 		galah_keys = labels_to_plot + ['rvs_spec_sig_to_noise']
 
-		cannon_keys = [key.replace('galah','cannon') for key in labels_to_plot] + \
-		['cannon_chi_sq', 'cannon_r_chi_sq']
+		cannon_keys = [key.replace('galah','cannon') for key in labels_to_plot] + ['cannon_chi_sq']
 		cannon_label_data = []
 		# iterate over each object
 		for source_id in label_df.source_id.to_numpy():
 			# store galah labels
 			row = label_df.loc[label_df.source_id==source_id]
 			galah_labels = row[galah_keys].values.flatten().tolist()
-			# fit cannon model
+			# retrieve data
 			flux = flux_df[str(source_id)]
 			sigma = sigma_df[str(source_id)]
-			ivar = 1/sigma**2
-			result = model.test(flux, ivar)
-			teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit = result[0][0]
-			# store cannon labels
-			cannon_labels = [teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit, \
-			result[2][0]['chi_sq'], result[2][0]['r_chi_sq']]
+
+			# # fit cannon model with pre-made optimizer
+			# ivar = 1/sigma**2
+			# result = model.test(flux, ivar)
+			# teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit = result[0][0]
+			# # store cannon labels
+			# cannon_labels = [teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit, \
+			# result[2][0]['chi_sq']]
+
+			# fit cannon model with custom optimizer
+			cannon_labels = custom_model.fit_single_star(flux, sigma)[0]
+
 			# convert to dictionary
 			keys = ['source_id'] + galah_keys + cannon_keys
-			values = [source_id] + galah_labels + cannon_labels
+			values = [source_id] + galah_labels + cannon_labels.tolist()
 			cannon_label_data.append(dict(zip(keys, values)))
+
 		cannon_label_df = pd.DataFrame(cannon_label_data)
 		return cannon_label_df
 
@@ -216,4 +231,4 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 		plot_label_one_to_one(cannon_label_df, labels_to_plot[i][6:])
 		plt.subplot(gs[2*i+1])
 		plot_label_difference(cannon_label_df, labels_to_plot[i][6:])
-	plt.savefig(figure_path, dpi=300)
+	plt.savefig(figure_path, dpi=300, bbox_inches='tight')

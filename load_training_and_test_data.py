@@ -35,8 +35,10 @@ galah_gaia_xmatch_cols = ['sobject_id', 'designation']
 # note: merge on sobject_id based on GALAH website
 # designations matched on multiple sobject IDs are multiple observations of the same object
 # keep observation (sobj_id) per designation (this is the default in drop_duplicates())
-galah_stars_gaia = pd.merge(galah_gaia_xmatch[galah_gaia_xmatch_cols], 
-	galah_allstar_catalog_cleaned[galah_allstar_catalog_cols], on='sobject_id')
+galah_stars_gaia = pd.merge(
+    galah_gaia_xmatch[galah_gaia_xmatch_cols], 
+	galah_allstar_catalog_cleaned[galah_allstar_catalog_cols],
+     on='sobject_id')
 galah_stars_gaia = galah_stars_gaia.drop_duplicates(subset='designation', keep='first')
 galah_stars_gaia = galah_stars_gaia[galah_stars_gaia.designation!=' ']
 print(len(galah_stars_gaia), 'stars with unique gaia designations from GALAH/gaia crossmatch')

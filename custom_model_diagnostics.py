@@ -2,7 +2,7 @@
 # I don't like the way this code is
 # I think I just need to write a function to mask the sigma array.
 
-from binary_model import *
+from custom_model import *
 import matplotlib.pyplot as plt
 import os
 plt.rcParams['font.size']=12
@@ -12,6 +12,9 @@ plt.rcParams['font.size']=12
 model_fileroot = 'binary_model_full'
 model_figure_path = './data/binary_models/'+model_fileroot+'_figures/'
 # os.mkdir(model_figure_path)
+
+
+# compute chi-squared of 
 
 def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	"""
@@ -161,12 +164,15 @@ def plot_binary_metric_distributions():
 	plt.xlabel(r'log ( $\chi^2_{\rm single}$ )', fontsize=20, labelpad=15)
 
 	plt.subplot(142)
+	control_n_negative = len(control_metric_df[control_metric_df.delta_chisq<0])
+	binary_n_negative = len(binary_metric_df[binary_metric_df.delta_chisq<0])
 	log_delta_chisq_bins = np.linspace(-3,3,40)
 	plt.hist(np.log10(control_metric_df.delta_chisq.to_numpy()), bins=log_delta_chisq_bins, 
-	    histtype='step', color='k')
+	    histtype='step', color='k', label='N<0={}'.format(control_n_negative))
 	plt.hist(np.log10(binary_metric_df.delta_chisq.to_numpy()), bins=log_delta_chisq_bins, 
-	    histtype='step', color=binary_color, lw=2.5)
+	    histtype='step', color=binary_color, lw=2.5,label='N<0={}'.format(binary_n_negative))
 	plt.xlabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )', fontsize=20, labelpad=15)
+	plt.legend(frameon=False)
 
 	plt.subplot(143)
 	training_density_bins=np.linspace(0,10, 40)
