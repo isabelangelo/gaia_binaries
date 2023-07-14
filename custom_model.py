@@ -8,12 +8,17 @@ from astropy.io import fits
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
 single_star_model = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
 
-# ca_idx1 = np.where((w>849) & (w<851))[0]
-# ca_idx2 = np.where((w>853.5) & (w<855.5))[0]
-# ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
-# ca_idx = list(ca_idx1) + list(ca_idx2) + list(ca_idx3)
-# spec_idx = np.array([i for i in range(len(w)) if i not in ca_idx])
+# broad mask
+ca_idx1 = np.where((w>849) & (w<851))[0]
+ca_idx2 = np.where((w>853.5) & (w<855.5))[0]
+ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
 
+# # this is a narrow mask
+# ca_idx1 = np.where((w>849.5) & (w<850.5))[0]
+# ca_idx2 = np.where((w>854) & (w<855))[0]
+# ca_idx3 = np.where((w>866) & (w<867))[0]
+
+ca_mask = np.array(list(ca_idx1) + list(ca_idx2) + list(ca_idx3))
 
 # function to call binary model
 def binary_model(param1, param2, return_components=False):
@@ -55,39 +60,85 @@ def binary_model(param1, param2, return_components=False):
 
 # fit single star
 def fit_single_star(flux, sigma):
+	"""
+	Args:
+		flux (np.array): normalized flux data
+		sigma (np.array): flux error data
+	"""
+
+	# mask out calcium triplet
+	# sigma[ca_mask] = 1
 
 	# single star model goodness-of-fit
-	def chisq_single(param):
+	def residuals(param):
 		model = single_star_model(param)
 		weights = 1/sigma
-		sq_resid = weights * (flux - model)
-		return sq_resid
+		resid = weights * (flux - model)
+		return resid
 
 	initial_labels = single_star_model._fiducials
-	fit_labels = leastsq(chisq_single,x0=initial_labels)[0]
-	return fit_labels, np.sum(chisq_single(fit_labels))
+	fit_labels = leastsq(residuals,x0=initial_labels)[0]
+	return fit_labels, np.sum(residuals(fit_labels)**2)
 
 
 # fit binary
 def fit_binary(flux, sigma):
+	"""
+	Args:
+		flux (np.array): normalized flux data
+		sigma (np.array): flux error data
+		initial_teff (tuple): initial guess for Teff1, Teff2,
+		e.g., (5800, 4700)
+	"""
+
+	# mask out calcium triplet
+	# sigma[ca_mask] = 1
 
 	# binary model goodness-of-fit
-	def chisq_binary(params):
+	def residuals(params):
 		param1 = params[:6]
 		param2 = params[6:]
 		param2_full = np.concatenate((param2[:2],param1[2:4],param2[2:3]))
-		# if 4000>param1[0] or 7000<param1[0]:
-		# 	return np.inf*np.ones(len(flux))
-		# elif 4000>param2[0] or 7000<param2[0]:
-		# 	return np.inf*np.ones(len(flux))
-		# else:
-		model = binary_model(param1, param2)
-		sq_resid = (flux - model)**2/sigma**2
-		return sq_resid
+		if 2450>param1[0] or 34000<param1[0]:
+			return np.inf*np.ones(len(flux))
+		elif 2450>param2[0] or 34000<param2[0]:
+			return np.inf*np.ones(len(flux))
+		else:
+			model = binary_model(param1, param2)
+			weights = 1/sigma
+			resid = weights * (flux - model)
+			return resid
 
-	initial_labels = [6000,4.3,-0.03,0.0,7,0,5800,4.2,5,0]
-	fit_labels = leastsq(chisq_binary,x0=initial_labels)[0]
-	return fit_labels, np.sum(chisq_binary(fit_labels))
+	# single optimizer
+	def optimizer(initial_teff):
+
+		# determine initial labels
+		rv_i = 0
+		teff1_i, teff2_i = initial_teff
+		logg_i, feh_i, alpha_i, vbroad_i = single_star_model._fiducials[1:]
+		initial_labels = [teff1_i, logg_i, feh_i, alpha_i, vbroad_i, rv_i, teff2_i, logg_i, vbroad_i, rv_i]
+
+		# perform least-sqaures fit
+		fit_labels = leastsq(residuals,x0=initial_labels)[0]
+		chi2_fit = np.sum(residuals(fit_labels)**2)
+		return fit_labels, chi2_fit
+
+	# find true global minimum
+	# initial teff guesses for optimizers
+	initial_teff_arr = [(4000,4000), (6000,4000), (8000,4000), 
+                        (6000,6000), (8000,6000), (8000,8000)]
+
+	# run optimizers, store fit with lowest chi2
+	lowest_global_chi2 = np.inf    
+	best_fit_labels = None
+
+	for initial_teff in initial_teff_arr:
+		results = optimizer(initial_teff)
+		if results[1] < lowest_global_chi2:
+			lowest_global_chi2 = results[1]
+			best_fit_labels = results[0]
+
+	return best_fit_labels, lowest_global_chi2
 
 	    
 

@@ -1,6 +1,5 @@
-
-# I don't like the way this code is
-# I think I just need to write a function to mask the sigma array.
+# to do : I think I need to change it to take in a flux array and a sigma array
+# instead of the dataframes.
 
 from custom_model import *
 import matplotlib.pyplot as plt
@@ -9,12 +8,9 @@ plt.rcParams['font.size']=12
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'binary_model_full'
+model_fileroot = 'binary_model_full_5opt'
 model_figure_path = './data/binary_models/'+model_fileroot+'_figures/'
-# os.mkdir(model_figure_path)
-
-
-# compute chi-squared of 
+os.mkdir(model_figure_path)
 
 def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	"""
@@ -31,9 +27,8 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 
 	# load flux
 	source_id = str(source_id)
-	flux = flux_df[source_id]
-	sigma = sigma_df[source_id]
-	# sigma = spec_mask(sigma_df[source_id])
+	flux = flux_df[source_id].to_numpy()
+	sigma = sigma_df[source_id].to_numpy()
 
 	# fit single star to data
 	single_fit_labels, single_fit_chi2 = fit_single_star(flux, sigma)
@@ -113,8 +108,8 @@ def plot_binary_metric_distributions():
 		metric_keys = ['single_chisq', 'delta_chisq', 'training_density', 'f_imp']
 		for source_id in label_df.source_id.to_numpy():
 			source_id = str(source_id)
-			flux = flux_df[source_id]
-			sigma = spec_mask(sigma_df[source_id])
+			flux = flux_df[source_id].to_numpy()
+			sigma = sigma_df[source_id].to_numpy()
 
 			# fit a binary and secondary to the data
 			single_fit_labels, single_fit_chisq = fit_single_star(flux, sigma)
@@ -158,8 +153,8 @@ def plot_binary_metric_distributions():
 	    histtype='step', color='k')
 	plt.hist(np.log10(binary_metric_df.single_chisq.to_numpy()), bins=log_single_chisq_bins,
 	    histtype='step', color=binary_color, lw=2.5)
-	plt.text(3.6,36,'single stars', fontsize=19)
-	plt.text(3.7,34,'binaries', color=binary_color, fontsize=19)
+	# plt.text(3.6,36,'single stars', fontsize=19)
+	# plt.text(3.7,34,'binaries', color=binary_color, fontsize=19)
 	plt.ylabel('number of systems', fontsize=20)
 	plt.xlabel(r'log ( $\chi^2_{\rm single}$ )', fontsize=20, labelpad=15)
 
@@ -226,13 +221,11 @@ def plot_binary_metric_distributions():
 		'k.', markersize=8, zorder=0, label='control sample')
 	plt.plot(binary_metric_df.f_imp, np.log10(binary_metric_df.delta_chisq.to_numpy()), 
 		'r.', markersize=8, label='binaries')
-	plt.legend(frameone=False, loc='lower right')
+	plt.legend(frameon=False, loc='lower right')
 	plt.xlabel(r'$f_{\rm imp}$')
 	plt.ylabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )')
 	figure_path = model_figure_path + 'EB2018_figureB2.png'
 	plt.savefig(figure_path, dpi=300, bbox_inches="tight")
-
-
 
 # model comparison for individual test cases
 binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_flux.csv')
