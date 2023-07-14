@@ -90,7 +90,6 @@ cannon_model_diagnostics.plot_one_to_one(
 	training_set_table.to_pandas(),
 	flux_df,
 	sigma_df,
-	model,
 	model_figure_path + 'one_to_one.png',
 	path_to_save_labels = model_fileroot+'_training_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))

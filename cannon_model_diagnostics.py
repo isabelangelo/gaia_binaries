@@ -1,3 +1,5 @@
+# to do : make it so that one_to_one doesnt take model as an input
+
 from astropy.io import fits
 import custom_model
 import matplotlib.pyplot as plt
@@ -159,7 +161,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 	pc = 'k';markersize=1;alpha_value=0.5
 	labels_to_plot = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 
-	def compute_cannon_labels(label_df, flux_df, sigma_df, model):
+	def compute_cannon_labels(label_df, flux_df, sigma_df):
 
 		galah_keys = labels_to_plot + ['rvs_spec_sig_to_noise']
 
@@ -173,14 +175,6 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 			# retrieve data
 			flux = flux_df[str(source_id)]
 			sigma = sigma_df[str(source_id)]
-
-			# # fit cannon model with pre-made optimizer
-			# ivar = 1/sigma**2
-			# result = model.test(flux, ivar)
-			# teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit = result[0][0]
-			# # store cannon labels
-			# cannon_labels = [teff_fit, logg_fit, feh_fit, met_fit, vbroad_fit, \
-			# result[2][0]['chi_sq']]
 
 			# fit cannon model with custom optimizer
 			cannon_labels = custom_model.fit_single_star(flux, sigma)[0]
@@ -216,8 +210,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, model,
 	cannon_label_df = compute_cannon_labels(
 		label_df, 
 		flux_df, 
-		sigma_df, 
-		model)
+		sigma_df)
 
 	if path_to_save_labels is not None:
 		cannon_label_filename = './data/cannon_label_dataframes/'+path_to_save_labels+'.csv'
