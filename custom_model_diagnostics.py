@@ -1,5 +1,9 @@
-# to do : I think I need to change it to take in a flux array and a sigma array
-# instead of the dataframes.
+# I can edit the plots to include the mask here.
+# but where can I access the mask? I forgot where I set it.
+# I think it's in custom_model, which is already imported
+# so maybe I just need to update the mask to be based on variable names.
+# or maybe I can plot the vspan based on the existing variables.
+
 
 from custom_model import *
 import matplotlib.pyplot as plt
@@ -8,7 +12,7 @@ plt.rcParams['font.size']=12
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'binary_model_full_5opt'
+model_fileroot = 'binary_model_cabroadmask_5opt'
 model_figure_path = './data/binary_models/'+model_fileroot+'_figures/'
 os.mkdir(model_figure_path)
 
@@ -18,6 +22,15 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	for an object with a given source_id
 	saves to file in ./data/binary_models/[model fileroot]_figures/
 	"""
+	# define function to plot calcium mask
+	def plot_calcium_mask(zorder_start):
+		pad = 0.02
+		plt.axvspan(w[ca_idx1][0]-pad, w[ca_idx1[-1]]+pad, 
+			alpha=1.0, color='#E8E8E8', zorder=zorder_start, ec='w')
+		plt.axvspan(w[ca_idx2][0]-pad, w[ca_idx2[-1]]+pad, 
+			alpha=1.0, color='#E8E8E8', zorder=zorder_start+1, ec='w')
+		plt.axvspan(w[ca_idx3][0]-pad, w[ca_idx3[-1]]+pad, 
+			alpha=1.0, color='#E8E8E8', zorder=zorder_start+2, ec='w')
 
 	# color codes for plot
 	primary_color='#91A8D6'
@@ -51,7 +64,7 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	# plot figure
 	plt.figure(figsize=(15,10))
 	plt.subplot(311);plt.xlim(w.min(), w.max());plt.ylim(0,1.25)
-	plt.errorbar(w, flux, yerr=sigma, color='k', ecolor='lightgrey', elinewidth=4, zorder=0)
+	plt.errorbar(w, flux, yerr=sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
 	plt.plot(w, primary_fit, '-', color=primary_color, lw=2)
 	plt.plot(w, secondary_fit, '-', color=secondary_color, lw=2)
 	plt.plot(w, binary_fit, '--', color=binary_fit_color, lw=2)
@@ -64,7 +77,7 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	plt.tick_params(axis='x', direction='inout', length=15)
 
 	plt.subplot(312);plt.xlim(w.min(), w.max());plt.ylim(0,1.2)
-	plt.errorbar(w, flux, yerr=sigma, color='k', ecolor='lightgrey', elinewidth=4, zorder=0)
+	plt.errorbar(w, flux, yerr=sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
 	plt.plot(w, binary_fit, color=binary_fit_color)
 	plt.plot(w, single_fit, color=single_fit_color, ls='--')
 	plt.text(847,0.1,'best-fit single star\n$\chi^2={}$'.format(np.round(single_fit_chi2,2)),
@@ -79,8 +92,9 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	plt.tick_params(axis='x', direction='inout', length=15)
 
 	plt.subplot(313);plt.xlim(w.min(), w.max())
-	plt.plot(w, flux - single_fit, color=single_fit_color)
-	plt.plot(w, flux - binary_fit, color=binary_fit_color, ls='--')
+	plt.plot(w, flux - single_fit, color=single_fit_color, zorder=3)
+	plt.plot(w, flux - binary_fit, color=binary_fit_color, ls='--', zorder=4)
+	plot_calcium_mask(zorder_start=0)
 	plt.axhline(0, color='dimgrey')
 	plt.ylabel('residual')
 	plt.subplots_adjust(hspace=0)

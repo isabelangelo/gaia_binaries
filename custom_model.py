@@ -67,7 +67,7 @@ def fit_single_star(flux, sigma):
 	"""
 
 	# mask out calcium triplet
-	# sigma[ca_mask] = 1
+	sigma[ca_mask] = 1
 
 	# single star model goodness-of-fit
 	def residuals(param):
@@ -92,7 +92,7 @@ def fit_binary(flux, sigma):
 	"""
 
 	# mask out calcium triplet
-	# sigma[ca_mask] = 1
+	sigma[ca_mask] = 1
 
 	# binary model goodness-of-fit
 	def residuals(params):
