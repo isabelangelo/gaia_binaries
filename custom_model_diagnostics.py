@@ -230,7 +230,8 @@ def plot_binary_metric_distributions():
 	plt.savefig(figure_path, dpi=300)
 
 	# Figure B2 from El-Badry 2018b
-	plt.figure(figsize=(5,5));plt.tight_layout()
+	plt.figure(figsize=(10,5));plt.tight_layout()
+	plt.subplot(121)
 	plt.plot(control_metric_df.f_imp, np.log10(control_metric_df.delta_chisq.to_numpy()), 
 		'k.', markersize=8, zorder=0, label='control sample')
 	plt.plot(binary_metric_df.f_imp, np.log10(binary_metric_df.delta_chisq.to_numpy()), 
@@ -238,6 +239,16 @@ def plot_binary_metric_distributions():
 	plt.legend(frameon=False, loc='lower right')
 	plt.xlabel(r'$f_{\rm imp}$')
 	plt.ylabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )')
+
+	plt.subplot(122)
+	plt.plot(control_metric_df.training_density, np.log10(control_metric_df.delta_chisq.to_numpy()), 
+		'k.', markersize=8, zorder=0, label='control sample')
+	plt.plot(binary_metric_df.training_density, np.log10(binary_metric_df.delta_chisq.to_numpy()), 
+		'r.', markersize=8, label='binaries')
+	plt.legend(frameon=False, loc='lower right')
+	plt.xlabel('training neighbor density')
+	plt.ylabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )')
+
 	figure_path = model_figure_path + 'EB2018_figureB2.png'
 	plt.savefig(figure_path, dpi=300, bbox_inches="tight")
 
