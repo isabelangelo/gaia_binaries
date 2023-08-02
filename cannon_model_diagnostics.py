@@ -144,8 +144,7 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	plt.savefig(figure_path, dpi=300, bbox_inches='tight')
 
 
-def plot_one_to_one(label_df, flux_df, sigma_df, model, 
-	figure_path, path_to_save_labels=None):
+def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_labels=None):
 	"""
 	Plot a one-to-one comparison of the training set labels from GALAH and the Cannon
     labels inferred from the training set spectra.
