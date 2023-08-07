@@ -37,25 +37,26 @@ def flux_weights(teff1, teff2):
     return(flux1_weight, flux2_weight)
 
 
-######### mask sigma array for chi2 calculation ############################################
-# load single star cannon model + wavelength
-w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
+# I think I can delete this, I'm commenting it out 8/2/2023
+# ######### mask sigma array for chi2 calculation ############################################
+# # load single star cannon model + wavelength
+# w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
 
-def spec_mask(sigma_series):
+# def spec_mask(sigma_series):
 
-    # set errors for masked values to 1
-    sigma_mask = sigma_series.copy()
-    sigma_mask.iloc[:5] = 1
-    sigma_mask.iloc[-5:] = 1
+#     # set errors for masked values to 1
+#     sigma_mask = sigma_series.copy()
+#     sigma_mask.iloc[:5] = 1
+#     sigma_mask.iloc[-5:] = 1
 
-    # mask out Ca features
-    ca_idx1 = np.where((w>849.9) & (w<850.2))[0]
-    ca_idx2 = np.where((w>854.3) & (w<854.6))[0]
-    ca_idx3 = np.where((w>866.3) & (w<866.6))[0]
-    ca_idx = list(ca_idx1) + list(ca_idx2) + list(ca_idx3)
-    sigma_mask.iloc[ca_idx] = 1
+#     # mask out Ca features
+#     ca_idx1 = np.where((w>849.9) & (w<850.2))[0]
+#     ca_idx2 = np.where((w>854.3) & (w<854.6))[0]
+#     ca_idx3 = np.where((w>866.3) & (w<866.6))[0]
+#     ca_idx = list(ca_idx1) + list(ca_idx2) + list(ca_idx3)
+#     sigma_mask.iloc[ca_idx] = 1
 
-    return sigma_mask
+#     return sigma_mask
 
 
 ########## compute density of training set for a given set of model parameters ########## 

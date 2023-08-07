@@ -12,7 +12,7 @@ plt.rcParams['font.size']=12
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'binary_model_cabroadmask_5opt'
+model_fileroot = 'cabroadmask_5opt_raghavan2010'
 model_figure_path = './data/binary_models/'+model_fileroot+'_figures/'
 os.mkdir(model_figure_path)
 
@@ -107,13 +107,13 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 def plot_binary_metric_distributions():
 
 	# load data for control sample
-	control_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_dopplegangers_flux.csv')
-	control_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_dopplegangers_sigma.csv')
-	control_label_df = pd.read_csv('./data/galah_label_dataframes/galah_dopplegangers_labels.csv')
+	control_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_singles_flux.csv')
+	control_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_singles_sigma.csv')
+	control_label_df = pd.read_csv('./data/galah_label_dataframes/raghavan_singles_labels.csv')
 	# load data for binary sample
-	binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_flux.csv')
-	binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_sigma.csv')
-	binary_label_df = pd.read_csv('./data/galah_label_dataframes/galah_binaries_labels.csv')
+	binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_unresolved_binaries_flux.csv')
+	binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_unresolved_binaries_sigma.csv')
+	binary_label_df = pd.read_csv('./data/galah_label_dataframes/raghavan_unresovled_binaries_labels.csv')
 
 	def compute_metrics(flux_df, sigma_df, label_df):
 
@@ -253,13 +253,31 @@ def plot_binary_metric_distributions():
 	plt.savefig(figure_path, dpi=300, bbox_inches="tight")
 
 # model comparison for individual test cases
-binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_flux.csv')
-binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_sigma.csv')
+
+# load data
+galah_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_flux.csv')
+galah_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_sigma.csv')
+
+raghavan_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_unresolved_binaries_flux.csv')
+raghavan_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_unresolved_binaries_sigma.csv')
+
+raghavan_single_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_singles_flux.csv')
+raghavan_single_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_singles_sigma.csv')
+
+
 test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
 test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
-plot_model_comparison(153768354707949056, binary_flux_df, binary_sigma_df, 'binary') # normal binary
-plot_model_comparison(5367424413685522688, binary_flux_df, binary_sigma_df, 'active_binary') # Ca emission + absorption binary
-plot_model_comparison(3798460353505152384, test_flux_df, test_sigma_df, 'single_star') # normal single star
+
+# from test set + GALAH binaries
+# plot_model_comparison(153768354707949056, binary_flux_df, binary_sigma_df, 'binary') # normal binary
+# plot_model_comparison(5367424413685522688, binary_flux_df, binary_sigma_df, 'active_binary') # Ca emission + absorption binary
+# plot_model_comparison(3798460353505152384, test_flux_df, test_sigma_df, 'single_star') # normal single star
+
+# from Raghavan 2010 sample
+plot_model_comparison(3626268998574790656, raghavan_binary_flux_df, raghavan_binary_sigma_df, 'binary') # normal binary
+plot_model_comparison(5367424413685522688, galah_binary_flux_df, galah_binary_sigma_df, 'active_binary') # Ca emission + absorption binary
+plot_model_comparison(5173902189571919872, raghavan_single_flux_df, raghavan_single_sigma_df, 'single_star') # normal single star
+
 
 # historgram of different binary detection metrics
 # note: maybe at one point I'll want this function to take input samples

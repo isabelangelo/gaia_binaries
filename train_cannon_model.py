@@ -90,7 +90,16 @@ cannon_model_diagnostics.plot_one_to_one(
 	training_set_table.to_pandas(),
 	flux_df,
 	sigma_df,
-	model_figure_path + 'one_to_one.png',
+	model_figure_path + 'one_to_one_training.png',
 	path_to_save_labels = model_fileroot+'_training_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
+
+test_label_df = pd.read_csv('./data/galah_label_dataframes/test_labels.csv')
+test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
+test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
+cannon_model_diagnostics.plot_one_to_one(
+    test_label_df, 
+    test_flux_df, 
+    test_sigma_df,
+    model_figure_path + 'one_to_one_test.png')
 
