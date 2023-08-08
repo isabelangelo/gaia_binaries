@@ -5,7 +5,7 @@ plt.rcParams['font.size']=12
 
 # path to save model files to, 
 # should be descriptive of current model to be trained
-model_fileroot = 'cabroadmask_5opt_spocssingles_traven2020binaries'
+model_fileroot = 'cabroadmask_5opt_elbadry2018'
 model_figure_path = './data/binary_models/'+model_fileroot+'_figures/'
 os.mkdir(model_figure_path)
 
@@ -98,13 +98,13 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	plt.savefig(figure_path, dpi=300)
 
 def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_label_df,
-	binary_flux_df, binary_sigma_df, binary_label_df):
+	binary_flux_df, binary_sigma_df, binary_label_df, save_metric_data=False):
 
 	def compute_metrics(flux_df, sigma_df, label_df):
 
 		# iterate over control sample source IDs
 		metric_data = []
-		metric_keys = ['single_chisq', 'delta_chisq', 'training_density', 'f_imp']
+		metric_keys = ['source_id','single_chisq', 'delta_chisq', 'training_density', 'f_imp']
 		for source_id in label_df.source_id.to_numpy():
 			source_id = str(source_id)
 			flux = flux_df[source_id].to_numpy()
@@ -131,7 +131,7 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 			f_imp = numerator/denominator
 
 			# save metrics
-			metric_values = [single_fit_chisq, delta_chisq, training_density, f_imp]
+			metric_values = [source_id, single_fit_chisq, delta_chisq, training_density, f_imp]
 			metric_data.append(dict(zip(metric_keys, metric_values)))
 
 		metric_df = pd.DataFrame(metric_data)
@@ -139,6 +139,10 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 
 	control_metric_df = compute_metrics(control_flux_df, control_sigma_df, control_label_df)
 	binary_metric_df = compute_metrics(binary_flux_df, binary_sigma_df, binary_label_df)
+
+	if save_metric_data:
+		control_metric_df.to_csv(model_figure_path+'control_metrics.csv')
+		binary_metric_df.to_csv(model_figure_path+'binary_metrics.csv')
 
 	# plot figure
 	plt.rcParams['font.size']=12
@@ -191,23 +195,31 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 	# 2D distributions for different metrics
 	plt.figure(figsize=(15,5));plt.tight_layout()
 
+	# can I change this? instead of scatter, I do it for single stars and binaries?
+
 	plt.subplot(121)
-	plt.scatter(
+	plt.plot(
 		binary_metric_df.single_chisq.to_numpy(), 
-		binary_metric_df.delta_chisq.to_numpy()/binary_metric_df.single_chisq.to_numpy(),
-		c = binary_metric_df.training_density.to_numpy(),
-		vmin=0, vmax=6)
+		binary_metric_df.delta_chisq.to_numpy()/binary_metric_df.single_chisq.to_numpy(), 
+		'r.', alpha=0.5)
+	plt.plot(
+		control_metric_df.single_chisq.to_numpy(), 
+		control_metric_df.delta_chisq.to_numpy()/control_metric_df.single_chisq.to_numpy(), 
+		'k.', alpha=0.5)
 	plt.xscale('log');plt.yscale('log')
 	plt.xlabel(r'$\chi^2_{\rm single}$');plt.ylabel(r'$\Delta \chi^2 / \chi^2_{\rm single}$')
 	
 
 	plt.subplot(122)
-	plt.scatter(
+	plt.plot(
 		binary_metric_df.single_chisq.to_numpy(), 
-		binary_metric_df.single_chisq.to_numpy() - binary_metric_df.delta_chisq.to_numpy(),
-		c = binary_metric_df.training_density.to_numpy(),
-		vmin=0, vmax=6)
-	plt.colorbar(label='training set neighbor density ')
+		binary_metric_df.single_chisq.to_numpy() - binary_metric_df.delta_chisq.to_numpy(), 
+		'r.', alpha=0.5)
+	plt.plot(
+		control_metric_df.single_chisq.to_numpy(), 
+		control_metric_df.single_chisq.to_numpy() - control_metric_df.delta_chisq.to_numpy(), 
+		'k.', alpha=0.5)
+	# plt.colorbar(label='training set neighbor density ')
 	plt.xscale('log');plt.yscale('log')
 	plt.xlabel(r'$\chi^2_{\rm single}$');plt.ylabel(r'$\chi^2_{\rm binary}$')
 
@@ -218,18 +230,18 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 	plt.figure(figsize=(10,5));plt.tight_layout()
 	plt.subplot(121)
 	plt.plot(control_metric_df.f_imp, np.log10(control_metric_df.delta_chisq.to_numpy()), 
-		'k.', markersize=8, zorder=0, label='control sample')
+		'k.', markersize=8, zorder=0, label='control sample', alpha=0.5)
 	plt.plot(binary_metric_df.f_imp, np.log10(binary_metric_df.delta_chisq.to_numpy()), 
-		'r.', markersize=8, label='binaries')
+		'r.', markersize=8, label='binaries', alpha=0.5)
 	plt.legend(frameon=False, loc='lower right')
 	plt.xlabel(r'$f_{\rm imp}$')
 	plt.ylabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )')
 
 	plt.subplot(122)
 	plt.plot(control_metric_df.training_density, np.log10(control_metric_df.delta_chisq.to_numpy()), 
-		'k.', markersize=8, zorder=0, label='control sample')
+		'k.', markersize=8, zorder=0, label='control sample', alpha=0.5)
 	plt.plot(binary_metric_df.training_density, np.log10(binary_metric_df.delta_chisq.to_numpy()), 
-		'r.', markersize=8, label='binaries')
+		'r.', markersize=8, label='binaries', alpha=0.5)
 	plt.legend(frameon=False, loc='lower right')
 	plt.xlabel('training neighbor density')
 	plt.ylabel(r'log ( $\chi^2_{\rm single}$ - $\chi^2_{\rm binary}$ )')
@@ -263,6 +275,14 @@ spocs_flux_df = pd.read_csv('../gaia_cannon_model/data/spocs_flux.csv')
 spocs_sigma_df = pd.read_csv('../gaia_cannon_model/data/spocs_sigma.csv')
 spocs_label_df = pd.read_csv('../gaia_cannon_model/data/spocs_labels.csv')
 
+elbadry_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_flux.csv')
+elbadry_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_sigma.csv')
+elbadry_binary_label_df = pd.read_csv('./data/galah_label_dataframes/elbadry_tableE3_binaries_labels.csv')
+
+elbadry_single_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
+elbadry_single_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
+elbadry_single_label_df = pd.read_csv('./data/galah_label_dataframes/elbadry_singles_labels.csv')
+
 # make plots (this is the part to change for different samples)
 
 # from test set + GALAH binaries
@@ -270,20 +290,18 @@ spocs_label_df = pd.read_csv('../gaia_cannon_model/data/spocs_labels.csv')
 # plot_model_comparison(5367424413685522688, galah_binary_flux_df, galah_binary_sigma_df, 'active_binary') # Ca emission + absorption binary
 # plot_model_comparison(3798460353505152384, test_flux_df, test_sigma_df, 'single_star') # normal single star
 
-# from Raghavan 2010 sample
-# plot_model_comparison(3626268998574790656, raghavan_binary_flux_df, raghavan_binary_sigma_df, 'binary') # normal binary
-# plot_model_comparison(19316224572460416, raghavan_binary_flux_df, raghavan_binary_sigma_df, 'binary2') # normal binary
-# plot_model_comparison(4093301474693288960, raghavan_single_flux_df, raghavan_single_sigma_df, 'single_star') # normal single star
-# plot_model_comparison(5367424413685522688, galah_binary_flux_df, galah_binary_sigma_df, 'active_binary') # Ca emission + absorption binary
-
+# from El-Badry 2018 sample
+# plot_model_comparison(2052757358317840768, elbadry_binary_flux_df, elbadry_binary_sigma_df, 'binary') # normal binary
+# plot_model_comparison(2076245160075753728, elbadry_single_flux_df, elbadry_single_sigma_df, 'single_star') # normal single star
 
 # histogram of different binary detection metrics
 plot_binary_metric_distributions(
-	spocs_flux_df, # 3 from above that define the single star sample
-	spocs_sigma_df, 
-	spocs_label_df,
-	galah_binary_flux_df, # 3 from above that define the binary sample
-	galah_binary_sigma_df, 
-	galah_binary_label_df)
+	elbadry_single_flux_df, # 3 from above that define the single star sample
+	elbadry_single_sigma_df, 
+	elbadry_single_label_df,
+	elbadry_binary_flux_df, # 3 from above that define the binary sample
+	elbadry_binary_sigma_df, 
+	elbadry_binary_label_df,
+	save_metric_data = True)
 
 
