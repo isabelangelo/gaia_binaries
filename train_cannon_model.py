@@ -1,3 +1,6 @@
+"""
+trains a cannon model and generates validation plots.
+"""
 import numpy as np 
 import cannon_model_diagnostics
 from astropy.table import Table
@@ -15,7 +18,7 @@ model_fileroot = 'gaia_rvs_model'
 training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 
 # Load the table containing the training set labels
-training_set_table = Table.read('./data/galah_label_dataframes/training_labels.csv', format='csv')
+training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
 training_set = training_set_table[training_labels]
 
 # normalized_sigma = np.nan_to_num(normalized_sigma_nan, nan=1)
@@ -29,7 +32,7 @@ vectorizer = tc.vectorizer.PolynomialVectorizer(training_labels, 2)
 
 # Create the model that will run in parallel using all available cores.
 model = tc.CannonModel(training_set, normalized_flux, normalized_ivar,
-                       vectorizer=vectorizer)
+                       vectorizer=vectorizer, regularization=None)
 
 # train model
 model_filename = './data/cannon_models/' + model_fileroot + '.model'
@@ -50,7 +53,7 @@ model_figure_path = './data/cannon_models/'+model_fileroot+'_figures/'
 os.mkdir(model_figure_path)
 
 # plot histograms of training + test sets
-test_set = pd.read_csv('./data/galah_label_dataframes/test_labels.csv')
+test_set = pd.read_csv('./data/abel_dataframes/test_labels.csv')
 training_histogram_filename = model_figure_path + 'training_set_plot.png'
 cannon_model_diagnostics.plot_training_set(
 	training_set.to_pandas(), 
@@ -94,7 +97,7 @@ cannon_model_diagnostics.plot_one_to_one(
 	path_to_save_labels = model_fileroot+'_training_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 
-test_label_df = pd.read_csv('./data/galah_label_dataframes/test_labels.csv')
+test_label_df = pd.read_csv('./data/label_dataframes/test_labels.csv')
 test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
 test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
 cannon_model_diagnostics.plot_one_to_one(

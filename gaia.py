@@ -1,4 +1,8 @@
-# to do : move the file writing files somewhere else? it may not be necessary
+"""
+defines functions to query stars
+and save their labels and RVS spectra to dataframes + fits files.
+"""
+
 from astropy.table import Table
 import astroquery
 from astroquery.gaia import Gaia
@@ -98,7 +102,7 @@ def retrieve_data_and_labels(query):
 
 # function to write outputs to files
 def write_labels_to_file(label_df, fileroot):
-	path = './data/galah_label_dataframes/'
+	path = './data/label_dataframes/'
 	filename = path + fileroot + '_labels.csv'
 	label_df.to_csv(filename)
 	print('{} labels saved to {}'.format(fileroot, filename))

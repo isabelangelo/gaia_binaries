@@ -1,3 +1,8 @@
+"""
+defines the following functions needed for custom model:
+    flux_weights: determines the weights of the primary and secondary to be used in the binary model
+    training_set_density: used in iterative training to remove anomalous stars
+"""
 import astropy.constants as c
 import astropy.units as u
 import pandas as pd
@@ -37,31 +42,9 @@ def flux_weights(teff1, teff2):
     return(flux1_weight, flux2_weight)
 
 
-# I think I can delete this, I'm commenting it out 8/2/2023
-# ######### mask sigma array for chi2 calculation ############################################
-# # load single star cannon model + wavelength
-# w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
-
-# def spec_mask(sigma_series):
-
-#     # set errors for masked values to 1
-#     sigma_mask = sigma_series.copy()
-#     sigma_mask.iloc[:5] = 1
-#     sigma_mask.iloc[-5:] = 1
-
-#     # mask out Ca features
-#     ca_idx1 = np.where((w>849.9) & (w<850.2))[0]
-#     ca_idx2 = np.where((w>854.3) & (w<854.6))[0]
-#     ca_idx3 = np.where((w>866.3) & (w<866.6))[0]
-#     ca_idx = list(ca_idx1) + list(ca_idx2) + list(ca_idx3)
-#     sigma_mask.iloc[ca_idx] = 1
-
-#     return sigma_mask
-
-
 ########## compute density of training set for a given set of model parameters ########## 
 
-training_label_df = pd.read_csv('./data/galah_label_dataframes/training_labels.csv')
+training_label_df = pd.read_csv('./data/label_dataframes/training_labels.csv')
 def training_set_density(cannon_params):
     teff, logg, feh, alpha, vbroad = cannon_params
 

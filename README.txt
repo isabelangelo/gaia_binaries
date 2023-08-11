@@ -1,10 +1,38 @@
 This file describes the workflow and individual files.
 
-(1) load_training_and_test_data.py loads the GALAH sample, filters, and divides into training/test data 
-that gets written to files:
-	- data/galah_catalogs stores the catalogs that are loaded to make the training set
-	- data/label_dataframes stores the labels for different star/binary samples
-	- data/cannon_training_data stores fits files with training flux, sigma loaded to train the cannon
-	- data/gaia_rvs_dataframes stores the flux and sigma of different star/binary samples in dataframes
-	  (labeled by source_id)
-(2) train_cannon_model.py trains the cannon and saves the trained models to data/cannon_models
+code files:
+(1) training a single star cannon model
+
+	gaia.py	: defines functions to query stars and save their labels and RVS spectra to dataframes.
+	load_training_and_test_data.py : loads labels + RVS spectra for the Cannon training and test sets.
+	train_cannon_model.py : trains a cannon model and generates validation plots.
+
+
+
+(2) validating single star cannon model
+
+	cannon_model_diagnostics : defines functions to generate cannon model diagnostic plots
+
+
+(3) writing binary cannon model
+
+	custom_model.py : contains single star model (with Calcium mask) and binary cannon model, and functions to fit model to data
+	custom_model_supplementary_functions.py : defines functions needed for custom model
+
+
+(4) validating binary cannon model
+
+	custom_model_diagnostics.py : defines functions to generate binary model diagnostic plots	
+	load_galah_binaries.py : loads RVS spectra + labels for binaries from Traven et al 2020
+	load_galah_control_sample.py : loads RVS spectra + labels for control sample from GALAH		
+	load_elbadry2018_data.py : loads RVS spectra + labels for single stars + binaries from El-Badry et al 2018b
+	load_raghavan2010_data.py : loads RVS spectra + labels for single stars + binaries from Raghavan et al 2010
+
+
+data files:
+	cannon_training_data : fits files with training set RVS spectra
+	cannon_models : single star cannon models + corresponding diagnostic plots
+	binary_models : diagnostic plots for different binary model versions + validation samples
+	gaia_rvs_dataframes : RVS spectra for training + test + validation samples
+	label_dataframes : literature-reported labels for training + test + validation samples
+	literature_data : various tables from GALAH catalogs and validation set literature

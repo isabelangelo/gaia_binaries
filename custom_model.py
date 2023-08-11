@@ -1,4 +1,7 @@
-
+"""
+contains single star model (with Calcium mask) and binary cannon model,
+and functions to fit model to data
+"""
 import thecannon as tc
 from custom_model_supplementary_functions import *
 from scipy.optimize import leastsq

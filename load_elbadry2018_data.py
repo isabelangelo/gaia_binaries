@@ -1,3 +1,6 @@
+"""
+loads RVS spectra + labels for single stars + binaries from El-Badry et al 2018b
+"""
 import astropy.table as at
 import pandas as pd
 import gaia
@@ -6,15 +9,17 @@ import gaia
 
 # Table E1: targets identified as single stars
 elbadry_stars = at.Table.read(
-    './data/literature_tables/ElBadry2018b_tables/Table_E1_all_single_star_ids.csv')
+    './data/literature_data/ElBadry2018b/Table_E1_all_single_star_ids.csv')
 
 # Table E3: targets identified as binaries in which both components contribute to the spectrum.
 elbadry_binaries = at.Table.read(
-    './data/literature_tables/ElBadry2018b_tables/Table_E3_all_binary_star_labels.csv')
+    './data/literature_data/ElBadry2018b/Table_E3_all_binary_star_labels.csv')
 elbadry_binaries.rename_column('APOGEE_ID', 'apogee_id')
 
 # APOGEE DR13/Gaia DR3 crossmatch from Adrian
-gaia_apogee_xmatch = at.Table.read('../allStar-dr17-synspec-gaiadr3-gaiasourcelite.fits')
+galah_catalog_path = './data/literature_tables/galah_catalogs/'
+gaia_apogee_xmatch = at.Table.read(galah_catalog_path + \
+	'allStar-dr17-synspec-gaiadr3-gaiasourcelite.fits')
 gaia_apogee_xmatch.rename_column('APOGEE_ID', 'apogee_id')
 print('\n{} single stars, {} binaries listed in El-Badry 2018 Tables E1+E3\n'.format(
 	len(elbadry_binaries),
@@ -26,7 +31,8 @@ print('\n{} single stars, {} binaries listed in El-Badry 2018 Tables E1+E3\n'.fo
 # vet single stars with Gaia parameters
 elbadry_stars_gaia = at.join(elbadry_stars, gaia_apogee_xmatch, keys='apogee_id').to_pandas()
 print('{} single stars found in Gaia-APOGEE crossmatch'.format(len(elbadry_stars_gaia)))
-elbadry_stars_gaia = elbadry_stars_gaia.query("non_single_star == 0 & ruwe < 1.4 & has_rvs == True")
+single_query_str = "non_single_star == 0 & ruwe < 1.4 & has_rvs == True"
+elbadry_stars_gaia = elbadry_stars_gaia.query(single_query_str)
 print('{} remain with non_single_star=0, RUWE<1.4, has_rvs=True\n'.format(len(elbadry_stars_gaia)))
 # keep full binary sample
 elbadry_binaries_gaia = at.join(elbadry_binaries, gaia_apogee_xmatch, keys='apogee_id').to_pandas()
@@ -53,15 +59,17 @@ print('querying equal sample sizes of N={} for single stars, binaries'.format(
 ########### upload to gaia to download RVS spectra ##################################
 query = f"SELECT  eb2018.apogee_id, eb2018.source_id, dr3.designation, eb2018.type, \
 dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, \
-dr3.non_single_star, dr3.ruwe \
+dr3.non_single_star, dr3.ruwe, \
+dr3.teff_gspphot, dr3.logg_gspphot, dr3.mh_gspphot, dr3.vbroad \
 FROM user_iangelo.elbadry_full_sample_gaia as eb2018 \
 JOIN gaiadr3.gaia_source as dr3 \
 ON dr3.source_id = eb2018.source_id \
 WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 50"
+AND dr3.rvs_spec_sig_to_noise > 50 \
+AND dr3.logg_gspphot > 4"
 
 # query gaia and download RVS spectra, save to dataframes
-# gaia.upload_table(elbadry_full_sample_gaia, 'elbadry_full_sample_gaia')
+gaia.upload_table(elbadry_full_sample_gaia, 'elbadry_full_sample_gaia')
 elbadry_full_sample_gaia_results, flux_df, sigma_df = gaia.retrieve_data_and_labels(query)
 print('{} with has_rvs = True'.format(len(elbadry_full_sample_gaia_results)))
 print('saving flux, flux_err to .csv files')

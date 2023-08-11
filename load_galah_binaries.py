@@ -1,3 +1,6 @@
+"""
+loads RVS spectra + labels for binaries from Traven et al 2020
+"""
 from astropy.table import Table
 import numpy as np
 import pandas as pd
@@ -8,9 +11,12 @@ import gaia
 
 ########### load data from catalogs ####################################################
 # GALAH DR3 main catalog
-galah_allstar_catalog = Table.read('./data/galah_catalogs/GALAH_DR3_main_allstar_v2.fits', format='fits').to_pandas()
+galah_catalog_path = './data/literature_data/galah_catalogs/'
+galah_allstar_catalog = Table.read(galah_catalog_path + 'GALAH_DR3_main_allstar_v2.fits', 
+    format='fits').to_pandas()
 # GALAH Gaia crossmatch for all spectra 
-galah_gaia_xmatch = Table.read('./data/galah_catalogs/GALAH_DR3_VAC_GaiaEDR3_v2.fits', format='fits').to_pandas()
+galah_gaia_xmatch = Table.read(galah_catalog_path + 'GALAH_DR3_VAC_GaiaEDR3_v2.fits', 
+    format='fits').to_pandas()
 # GALAH binary catalog from Traven (2020)
 catalogs = Vizier.find_catalogs('Traven')
 catalogs = {k: v for k, v in catalogs.items() if 'J/A+A/638/A145' in k}

@@ -1,3 +1,6 @@
+"""
+defines the functions to generate binary model diagnostic plots
+"""
 from custom_model import *
 import matplotlib.pyplot as plt
 import os
@@ -104,7 +107,8 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 
 		# iterate over control sample source IDs
 		metric_data = []
-		metric_keys = ['source_id','single_chisq', 'delta_chisq', 'training_density', 'f_imp']
+		metric_keys = ['source_id','single_chisq', 'binary_chisq','delta_chisq', 'training_density', \
+			'f_imp', 'binary_teff1', 'binary_teff2']
 		for source_id in label_df.source_id.to_numpy():
 			source_id = str(source_id)
 			flux = flux_df[source_id].to_numpy()
@@ -131,7 +135,8 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 			f_imp = numerator/denominator
 
 			# save metrics
-			metric_values = [source_id, single_fit_chisq, delta_chisq, training_density, f_imp]
+			metric_values = [source_id, single_fit_chisq, binary_fit_chisq, delta_chisq, training_density, \
+				f_imp, primary_fit_labels[0], secondary_fit_labels[0]]
 			metric_data.append(dict(zip(metric_keys, metric_values)))
 
 		metric_df = pd.DataFrame(metric_data)
@@ -254,22 +259,22 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 # load flux, sigma data for various samples
 galah_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_flux.csv')
 galah_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_binaries_sigma.csv')
-galah_binary_label_df = pd.read_csv('./data/galah_label_dataframes/galah_binaries_labels.csv')
+galah_binary_label_df = pd.read_csv('./data/label_dataframes/galah_binaries_labels.csv')
 
 raghavan_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_unresolved_binaries_flux.csv')
 raghavan_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_unresolved_binaries_sigma.csv')
-raghavan_binary_label_df = pd.read_csv('./data/galah_label_dataframes/raghavan_unresolved_binaries_labels.csv')
+raghavan_binary_label_df = pd.read_csv('./data/label_dataframes/raghavan_unresolved_binaries_labels.csv')
 
 raghavan_single_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_singles_flux.csv')
 raghavan_single_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/raghavan_singles_sigma.csv')
-raghavan_single_label_df = pd.read_csv('./data/galah_label_dataframes/raghavan_singles_labels.csv')
+raghavan_single_label_df = pd.read_csv('./data/label_dataframes/raghavan_singles_labels.csv')
 
 test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
 test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
 
-control_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_dopplegangers_flux.csv')
-control_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_dopplegangers_sigma.csv')
-control_label_df = pd.read_csv('./data/galah_label_dataframes/galah_dopplegangers_labels.csv')
+control_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_control_flux.csv')
+control_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/galah_control_sigma.csv')
+control_label_df = pd.read_csv('./data/label_dataframes/galah_control_labels.csv')
 
 spocs_flux_df = pd.read_csv('../gaia_cannon_model/data/spocs_flux.csv')
 spocs_sigma_df = pd.read_csv('../gaia_cannon_model/data/spocs_sigma.csv')
@@ -277,11 +282,11 @@ spocs_label_df = pd.read_csv('../gaia_cannon_model/data/spocs_labels.csv')
 
 elbadry_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_flux.csv')
 elbadry_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_sigma.csv')
-elbadry_binary_label_df = pd.read_csv('./data/galah_label_dataframes/elbadry_tableE3_binaries_labels.csv')
+elbadry_binary_label_df = pd.read_csv('./data/label_dataframes/elbadry_tableE3_binaries_labels.csv')
 
 elbadry_single_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
 elbadry_single_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
-elbadry_single_label_df = pd.read_csv('./data/galah_label_dataframes/elbadry_singles_labels.csv')
+elbadry_single_label_df = pd.read_csv('./data/label_dataframes/elbadry_singles_labels.csv')
 
 # make plots (this is the part to change for different samples)
 

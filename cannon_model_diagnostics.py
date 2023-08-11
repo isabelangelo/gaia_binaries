@@ -1,5 +1,10 @@
-# to do : make it so that one_to_one doesnt take model as an input
-
+"""
+defines functions to generate the following cannon model diagnostic plots:
+	plot_training_set() - histogram of training set labels
+	plot_example_spec_top_panel() - labels of example training stars
+	plot_exammple_spec_bottom_panel() - data + cannon model of example training stars
+	one_to_one() - GALAH versus Cannon labels for sample of stars
+"""
 from astropy.io import fits
 import custom_model
 import matplotlib.pyplot as plt
@@ -94,6 +99,9 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	"""
 	Plot data + cannon model fits for 3 examples from training set
 	Examples are stars with Teff=4500, 5800, 6200 K
+
+	note: these are not the best-fit models, they are just the models based on the 
+    GALAH-reported parameters 
 	"""
 	row4500 = training_label_df.iloc[np.argmin(np.abs(training_label_df.galah_teff-4500))]
 	row5800 = training_label_df.iloc[np.argmin(np.abs(training_label_df.galah_teff-5800))]
@@ -212,7 +220,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 		sigma_df)
 
 	if path_to_save_labels is not None:
-		cannon_label_filename = './data/cannon_label_dataframes/'+path_to_save_labels+'.csv'
+		cannon_label_filename = './data/label_dataframes/'+path_to_save_labels+'.csv'
 		cannon_label_df.to_csv(cannon_label_filename)
 		print('cannon label dataframe saved to {}'.format(cannon_label_filename))
 

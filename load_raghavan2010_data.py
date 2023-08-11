@@ -1,3 +1,6 @@
+"""
+loads RVS spectra + labels for single stars + binaries from Raghavan et al 2010
+"""
 import pandas as pd
 import numpy as np
 import gaia
@@ -17,7 +20,7 @@ def fix_dtype(table):
 ########### load data from Raghavan 2010 ################################################
 
 # full sample, with companions, not including excluded targets from Tables 2&3
-raghavan_table13 = Table.read('./data/literature_tables/raghavan2010_table13.fits',format='fits').to_pandas()
+raghavan_table13 = Table.read('./data/literature_data/Raghavan2010/Table_13.fits',format='fits').to_pandas()
 raghavan_table13 = fix_dtype(raghavan_table13)
 raghavan_table13['is_single'] = [i.isspace() for i in raghavan_table13.Comp.to_numpy()]
 print(len(raghavan_table13), 'total entries in Raghavan 2010')
@@ -42,7 +45,7 @@ print(len(raghavan_binaries), 'unique HD ids after removing visual (i.e. resolve
 
 # I computed this manually by uploading Table 17 HIP IDs
 # from raghavan2010_table17_targets.txt into Gaia
-raghavan_gaia_xmatch = pd.read_csv('./data/literature_tables/raghavan2010_table17_gaia_IDs.csv')
+raghavan_gaia_xmatch = pd.read_csv('./data/literature_data/Raghavan2010/Table_17_gaia_IDs.csv')
 
 # get Gaia source IDs for single stars
 # this step removes the sun from the single star sample, but preserves the rest
@@ -52,6 +55,8 @@ raghavan_stars_gaia = pd.merge(
     raghavan_gaia_xmatch[['target_id','designation','source_id']], 
     on='target_id') 
 raghavan_stars_gaia['type'] = 'single' # store type for sorting
+
+import pdb;pdb.set_trace()
 
 # get Gaia source IDs for binaries
 # this step removes HIP 40167, 73695 but they don't have RVS spectra anyways
