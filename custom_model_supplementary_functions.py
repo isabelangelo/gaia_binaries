@@ -16,7 +16,7 @@ from scipy.interpolate import interp1d
 speed_of_light_kms = c.c.to(u.km/u.s).value
 
 # load data from Pecuat & Mamajek for flux/magnitude calculations
-pm2013 = pd.read_csv('./data/literature_tables/PecautMamajek_table.csv', 
+pm2013 = pd.read_csv('./data/literature_data/PecautMamajek_table.csv', 
                     delim_whitespace=True).replace('...',np.nan)
 
 # get Vmag, V-I flux from Pecaut & Mamajek
