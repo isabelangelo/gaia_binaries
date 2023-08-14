@@ -44,7 +44,7 @@ print(len(raghavan_binaries), 'unique HD ids after removing visual (i.e. resolve
 ########### crossmatch HIP IDs/gaia and filter sample ##################################
 
 # I computed this manually by uploading Table 17 HIP IDs
-# from raghavan2010_table17_targets.txt into Gaia
+# from Table_17_targets.txt into Gaia
 raghavan_gaia_xmatch = pd.read_csv('./data/literature_data/Raghavan2010/Table_17_gaia_IDs.csv')
 
 # get Gaia source IDs for single stars

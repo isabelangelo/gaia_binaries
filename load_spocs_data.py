@@ -127,7 +127,7 @@ def save_spocs_cannon_labels(label_df, flux_df, sigma_df, path_to_save_labels=No
 
 	spocs_cannon_label_df = compute_cannon_labels(label_df, flux_df, sigma_df)
 	if path_to_save_labels is not None:
-	    cannon_label_filename = './data/'+path_to_save_labels+'.csv'
+	    cannon_label_filename = './data/label_dataframes/'+path_to_save_labels+'_labels.csv'
 	    spocs_cannon_label_df.to_csv(cannon_label_filename)
 	    print('cannon label dataframe saved to {}'.format(cannon_label_filename))
 

@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from astropy.io import fits
 from scipy.interpolate import interp1d
+from scipy import stats
 
 ########## calculate relative flux weights of primary,secondary ###############
 
@@ -45,30 +46,14 @@ def flux_weights(teff1, teff2):
 ########## compute density of training set for a given set of model parameters ########## 
 
 training_label_df = pd.read_csv('./data/label_dataframes/training_labels.csv')
+training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
+
+# compute KDE from training set
+training_data = training_label_df[training_labels].to_numpy()
+training_density_kde = stats.gaussian_kde(training_data.T)
+
 def training_set_density(cannon_params):
-    teff, logg, feh, alpha, vbroad = cannon_params
-
-    # these are kind of randomly chosen at the momend
-    # teff_window = 100
-    # logg_window = 0.1
-    # feh_window = 0.1
-    # alpha_window = 0.1
-    # vbroad_window = 5
-    teff_window = 500
-    logg_window = 0.25
-    feh_window = 0.25
-    alpha_window = 0.1
-    vbroad_window = 10
-
-    training_neighbors = training_label_df.query(
-        'galah_teff < @teff+@teff_window & galah_teff > @teff-@teff_window \
-        & galah_logg < @logg+@logg_window & galah_logg > @logg-@logg_window \
-        & galah_feh < @feh+@feh_window & galah_feh > @feh-@feh_window \
-        & galah_alpha < @alpha+@alpha_window & galah_alpha > @alpha-@alpha_window \
-        & galah_vbroad < @vbroad+@vbroad_window & galah_vbroad > @vbroad-@vbroad_window')
-
-    hypercube_volume = teff_window*logg_window*feh_window*alpha_window*vbroad_window
-    density = len(training_neighbors)/hypercube_volume
+    density = training_density_kde(cannon_params)[0]
     return density
 
 

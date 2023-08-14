@@ -79,6 +79,7 @@ def fit_single_star(flux, sigma):
 		resid = weights * (flux - model)
 		return resid
 
+	print('running single star optimizer on 1 spectrum')
 	initial_labels = single_star_model._fiducials
 	fit_labels = leastsq(residuals,x0=initial_labels)[0]
 	return fit_labels, np.sum(residuals(fit_labels)**2)
