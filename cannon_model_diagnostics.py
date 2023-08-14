@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
 import pandas as pd
+import thecannon as tc
+import os
 
 plt.rcParams['font.size']=12
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
@@ -232,3 +234,60 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 		plt.subplot(gs[2*i+1])
 		plot_label_difference(cannon_label_df, labels_to_plot[i][6:])
 	plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+
+# generate diagnostic plots for single star model
+# save diagnostic plots
+model_figure_path = './data/cannon_models/'+custom_model.model_fileroot+'_figures/'
+os.mkdir(model_figure_path)
+
+# plot histograms of training + test sets
+test_set = pd.read_csv('./data/label_dataframes/test_labels.csv')
+training_histogram_filename = model_figure_path + 'training_set_plot.png'
+plot_training_set(
+	custom_model.training_set.to_pandas(), 
+	test_set, 
+	training_histogram_filename)
+print('training set histrogram saved to {}'.format(training_histogram_filename))
+
+# training set parameter space corner plot for 3 test spectra
+example_top_filename = model_figure_path + 'example_spec_top_panel.png'
+plot_example_spec_top_panel(
+	custom_model.training_set.to_pandas(), 
+	example_top_filename)
+print('top panel of example spectrum plot saved to {}'.format(example_top_filename))
+
+# cannon model fits for 3 test spectra
+example_bottom_filename = model_figure_path +  'example_spec_bottom_panel.png'
+plot_example_spec_bottom_panel(
+	custom_model.training_set_table.to_pandas(),
+	custom_model.training_flux_df,
+	custom_model.training_sigma_df,
+	custom_model.single_star_model,
+	example_bottom_filename)
+print('bottom panel of example spectrum plot saved to {}'.format(example_bottom_filename))
+
+# diagnostic plots from the cannon code
+theta_figure = tc.plot.theta(custom_model.single_star_model)
+theta_figure.savefig(model_figure_path + 'theta.png', dpi=300)
+print('theta plot saved to {}'.format(model_figure_path + 'theta.png'))
+
+scatter_figure = tc.plot.scatter(custom_model.single_star_model)
+scatter_figure.savefig(model_figure_path + 'scatter.png', dpi=300)
+print('pixel scatter plot saved to {}'.format(model_figure_path + 'scatter.png'))
+
+plot_one_to_one(
+	custom_model.training_set_table.to_pandas(),
+	custom_model.training_flux_df,
+	custom_model.training_sigma_df,
+	model_figure_path + 'one_to_one_training.png',
+	path_to_save_labels = custom_model.model_fileroot+'_training_labels')
+print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
+
+test_label_df = pd.read_csv('./data/label_dataframes/test_labels.csv')
+test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
+test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
+plot_one_to_one(
+    test_label_df, 
+    test_flux_df, 
+    test_sigma_df,
+    model_figure_path + 'one_to_one_test.png')

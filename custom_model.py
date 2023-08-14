@@ -3,13 +3,27 @@ contains single star model (with Calcium mask) and binary cannon model,
 and functions to fit model to data
 """
 import thecannon as tc
+from astropy.table import Table
 from custom_model_supplementary_functions import *
 from scipy.optimize import leastsq
 from astropy.io import fits
 
+# =====================================================================================
+# load cannon model to use (this needs to be changed to test different models)
+single_star_model = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
+model_fileroot = 'gaia_rvs_model'
+
+training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
+training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
+training_set = training_set_table[training_labels]
+
+training_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/training_flux.csv')
+training_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma.csv')
+
+# ======================================================================================
+
 # load single star cannon model + wavelength
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
-single_star_model = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
 
 # broad mask
 ca_idx1 = np.where((w>849) & (w<851))[0]

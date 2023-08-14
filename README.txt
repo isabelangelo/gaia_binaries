@@ -5,13 +5,15 @@ code files:
 
 	gaia.py	: defines functions to query stars and save their labels and RVS spectra to dataframes.
 	load_training_and_test_data.py : loads labels + RVS spectra for the Cannon training and test sets.
-	train_cannon_model.py : trains a cannon model and generates validation plots.
+	train_cannon_model.py : trains a cannon model
 
 
 
 (2) validating single star cannon model
 
-	cannon_model_diagnostics : defines functions to generate cannon model diagnostic plots
+	cannon_model_diagnostics : generates single star cannon model diagnostic plots
+	NOTE: in order to run this, make sure to update custom_model.py to load the 
+	correct Cannon model version
 
 
 (3) writing binary cannon model
