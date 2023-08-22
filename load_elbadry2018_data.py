@@ -17,10 +17,10 @@ elbadry_binaries = at.Table.read(
 elbadry_binaries.rename_column('APOGEE_ID', 'apogee_id')
 
 # APOGEE DR13/Gaia DR3 crossmatch from Adrian
-galah_catalog_path = './data/literature_tables/galah_catalogs/'
+galah_catalog_path = './data/literature_data/galah_catalogs/'
 gaia_apogee_xmatch = at.Table.read(galah_catalog_path + \
 	'allStar-dr17-synspec-gaiadr3-gaiasourcelite.fits')
-gaia_apogee_xmatch.rename_column('APOGEE_ID', 'apogee_id')
+# gaia_apogee_xmatch.rename_column('APOGEE_ID', 'apogee_id')
 print('\n{} single stars, {} binaries listed in El-Badry 2018 Tables E1+E3\n'.format(
 	len(elbadry_binaries),
 	len(elbadry_stars)))
@@ -39,6 +39,11 @@ elbadry_binaries_gaia = at.join(elbadry_binaries, gaia_apogee_xmatch, keys='apog
 print('{} binaries found in Gaia-APOGEE crossmatch'.format(len(elbadry_binaries_gaia)))
 elbadry_binaries_gaia = elbadry_binaries_gaia.query('has_rvs == True')
 print('{} remain with has_rvs=True\n'.format(len(elbadry_binaries_gaia)))
+
+# remove binaries that are undetectable by our methods
+# i.e., ones found in multi-epoch spectra (reported q_dyn)
+# and ones with q<0.4 or q>0.8
+elbadry_binaries_gaia.query("(q_dyn=='---') & (q_spec>0.4) & (q_spec<0.8)")
 
 # merge full sample, preserving binary/single star labels
 # store type for sorting
@@ -65,7 +70,7 @@ FROM user_iangelo.elbadry_full_sample_gaia as eb2018 \
 JOIN gaiadr3.gaia_source as dr3 \
 ON dr3.source_id = eb2018.source_id \
 WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 50 \
+AND dr3.rvs_spec_sig_to_noise > 30 \
 AND dr3.logg_gspphot > 4"
 
 # query gaia and download RVS spectra, save to dataframes

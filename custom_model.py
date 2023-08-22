@@ -11,7 +11,7 @@ from astropy.io import fits
 # =====================================================================================
 # load cannon model to use (this needs to be changed to test different models)
 single_star_model = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
-model_fileroot = 'gaia_rvs_model'
+model_fileroot = 'gaia_rvs_model_test'
 
 training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
@@ -36,6 +36,13 @@ ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
 # ca_idx3 = np.where((w>866) & (w<867))[0]
 
 ca_mask = np.array(list(ca_idx1) + list(ca_idx2) + list(ca_idx3))
+
+# define regularization function
+# to penalize low training density
+def regularization(n):
+    exp = -2*np.log10(n)-2
+    factor = 10**exp
+    return(n*factor)
 
 # function to call binary model
 def binary_model(param1, param2, return_components=False):
@@ -121,11 +128,10 @@ def fit_binary(flux, sigma):
 			return np.inf*np.ones(len(flux))
 		elif 2450>param2[0] or 34000<param2[0]:
 			return np.inf*np.ones(len(flux))
-		else:
-			model = binary_model(param1, param2)
-			weights = 1/sigma
-			resid = weights * (flux - model)
-			return resid
+		model = binary_model(param1, param2)
+		weights = 1/sigma
+		resid = weights * (flux - model)
+		return resid
 
 	# single optimizer
 	def optimizer(initial_teff):
@@ -158,7 +164,7 @@ def fit_binary(flux, sigma):
 
 	return best_fit_labels, lowest_global_chi2
 
-	    
+ 
 
 
 

@@ -1,7 +1,7 @@
 """
 defines the following functions needed for custom model:
     flux_weights: determines the weights of the primary and secondary to be used in the binary model
-    training_set_density: used in iterative training to remove anomalous stars
+    training_density: used in iterative training to remove anomalous stars
 """
 import astropy.constants as c
 import astropy.units as u
@@ -52,7 +52,7 @@ training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah
 training_data = training_label_df[training_labels].to_numpy()
 training_density_kde = stats.gaussian_kde(training_data.T)
 
-def training_set_density(cannon_params):
+def training_density(cannon_params):
     density = training_density_kde(cannon_params)[0]
     return density
 

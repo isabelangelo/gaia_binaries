@@ -1,3 +1,6 @@
+# to do : change control names to single star?
+# if I end up keeping this script
+
 """
 defines the functions to generate binary model diagnostic plots
 """
@@ -55,7 +58,7 @@ def plot_model_comparison(source_id, flux_df, sigma_df, object_type_str):
 	# compute dRV, mass ratio of best-fit binary
 	drv_fit = np.round(np.abs(secondary_fit_labels[-1] - primary_fit_labels[-1]), decimals=1)
 	q_fit = np.round(teff2mass(secondary_fit_labels[0])/teff2mass(primary_fit_labels[0]), decimals=2)
-	density_fit = np.round(training_set_density(single_fit_labels), decimals=2)
+	density_fit = np.round(training_density(single_fit_labels), decimals=2)
 
 	# plot figure
 	plt.figure(figsize=(15,10))
@@ -120,7 +123,7 @@ def plot_binary_metric_distributions(control_flux_df, control_sigma_df, control_
 
 			# refine relevant metrics
 			delta_chisq = single_fit_chisq - binary_fit_chisq
-			training_density = training_set_density(single_fit_labels)
+			training_density = training_density(single_fit_labels)
 
 			# I need the binary flux and single star model flux
 			single_fit  = single_star_model(single_fit_labels)
