@@ -21,20 +21,19 @@ apogee_catalog_path = './data/literature_data/survey_catalogs/'
 gaia_apogee_xmatch = at.Table.read(apogee_catalog_path + \
 	'allStar-dr17-synspec-gaiadr3-gaiasourcelite.fits')
 # gaia_apogee_xmatch.rename_column('APOGEE_ID', 'apogee_id')
-print('\n{} single stars, {} binaries listed in El-Badry 2018 Tables E1+E3\n'.format(
-	len(elbadry_binaries),
-	len(elbadry_stars)))
 
 ########### crossmatch APOGEE IDs/gaia and filter sample ################################## 
 # require has_rvs = True, since this information is available
 
 # vet single stars with Gaia parameters
+print('\n{} single stars listed in El-Badry 2018 Table E1'.format(len(elbadry_stars)))
 elbadry_stars_gaia = at.join(elbadry_stars, gaia_apogee_xmatch, keys='apogee_id').to_pandas()
 print('{} single stars found in Gaia-APOGEE crossmatch'.format(len(elbadry_stars_gaia)))
 single_query_str = "non_single_star == 0 & ruwe < 1.4 & has_rvs == True"
 elbadry_stars_gaia = elbadry_stars_gaia.query(single_query_str)
 print('{} remain with non_single_star=0, RUWE<1.4, has_rvs=True\n'.format(len(elbadry_stars_gaia)))
 # keep full binary sample
+print('\n{} binaries listed in El-Badry 2018 Table E1'.format(len(elbadry_binaries)))
 elbadry_binaries_gaia = at.join(elbadry_binaries, gaia_apogee_xmatch, keys='apogee_id').to_pandas()
 print('{} binaries found in Gaia-APOGEE crossmatch'.format(len(elbadry_binaries_gaia)))
 elbadry_binaries_gaia = elbadry_binaries_gaia.query('has_rvs == True')
