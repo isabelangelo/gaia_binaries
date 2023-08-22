@@ -17,8 +17,8 @@ elbadry_binaries = at.Table.read(
 elbadry_binaries.rename_column('APOGEE_ID', 'apogee_id')
 
 # APOGEE DR13/Gaia DR3 crossmatch from Adrian
-galah_catalog_path = './data/literature_data/galah_catalogs/'
-gaia_apogee_xmatch = at.Table.read(galah_catalog_path + \
+apogee_catalog_path = './data/literature_data/survey_catalogs/'
+gaia_apogee_xmatch = at.Table.read(apogee_catalog_path + \
 	'allStar-dr17-synspec-gaiadr3-gaiasourcelite.fits')
 # gaia_apogee_xmatch.rename_column('APOGEE_ID', 'apogee_id')
 print('\n{} single stars, {} binaries listed in El-Badry 2018 Tables E1+E3\n'.format(

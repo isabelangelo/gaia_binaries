@@ -13,7 +13,7 @@ import gaia
 
 ########### load data from catalogs ################################################
 # GALAH DR3 main catalog
-galah_catalog_path = './data/literature_data/galah_catalogs/'
+galah_catalog_path = './data/literature_data/survey_catalogs/'
 galah_allstar_catalog = Table.read(galah_catalog_path + 'GALAH_DR3_main_allstar_v2.fits', 
     format='fits').to_pandas()
 # GALAH Gaia crossmatch for all spectra 
