@@ -1,6 +1,9 @@
 # to do : if I simulate data, 
 # make this an inherited class of Spectrum
 # and make another class called SimulatedSpectrum
+# should I add the path as a part of the initialization
+# so that it can pull the label dataframe?
+
 from custom_model import *
 import matplotlib.pyplot as plt
 
@@ -58,6 +61,13 @@ class GaiaSpectrum(object):
         secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
         self.primary_fit_training_density = training_density(primary_fit_labels)
         self.secondary_fit_training_density = training_density(secondary_fit_labels)
+
+        # compute improvement fraction
+        numerator = np.sum((np.abs(self.single_fit - self.flux) - np.abs(self.binary_fit - self.flux))/self.sigma)
+        denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma)
+        self.f_imp = numerator/denominator
+
+        # metrics without calcium mask, training density minimum
             
     def plot(self):
 
@@ -113,15 +123,4 @@ class GaiaSpectrum(object):
         plt.tick_params(axis='x', direction='inout', length=15)
         plt.xlabel('wavelength (nm)')
         plt.show()
-
-
-# test code
-elbadry_single_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
-elbadry_single_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
-elbadry_single_label_df = pd.read_csv('./data/label_dataframes/elbadry_singles_labels.csv')
-
-test_spec = GaiaSpectrum(
-    2504602280218188416, 
-    elbadry_single_flux_df['2504602280218188416'],
-    elbadry_single_sigma_df['2504602280218188416'])
 

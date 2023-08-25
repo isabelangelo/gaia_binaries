@@ -56,8 +56,6 @@ raghavan_stars_gaia = pd.merge(
     on='target_id') 
 raghavan_stars_gaia['type'] = 'single' # store type for sorting
 
-import pdb;pdb.set_trace()
-
 # get Gaia source IDs for binaries
 # this step removes HIP 40167, 73695 but they don't have RVS spectra anyways
 raghavan_binaries['target_id'] = ['HIP '+str(i) for i in raghavan_binaries.HIP]
