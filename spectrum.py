@@ -31,6 +31,10 @@ class GaiaSpectrum(object):
         self.source_id = source_id
         self.flux = flux
         self.sigma = sigma
+
+        # masked sigma for  metric calculations
+        self.sigma_ca_mask = sigma.copy()
+        self.sigma_ca_mask[ca_mask] = np.inf
         
         # best-fit single star
         self.single_fit_labels, self.single_fit_chisq = fit_single_star(
@@ -63,11 +67,24 @@ class GaiaSpectrum(object):
         self.secondary_fit_training_density = training_density(secondary_fit_labels)
 
         # compute improvement fraction
-        numerator = np.sum((np.abs(self.single_fit - self.flux) - np.abs(self.binary_fit - self.flux))/self.sigma)
-        denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma)
+        numerator = np.sum((np.abs(self.single_fit - self.flux) - \
+            np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
+        denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
         self.f_imp = numerator/denominator
 
         # metrics without calcium mask, training density minimum
+        # i.e. model will fit to oddballs, albeit with incorrect labels
+    def fit_oddball(self):
+        oddball_fit_labels, oddball_fit_chisq = fit_single_star(
+            self.flux, 
+            self.sigma,
+            mask_calcium=False, 
+            training_density_minimum=False)
+        setattr(self, 'oddball_fit_labels', oddball_fit_labels)
+        setattr(self, 'oddball_fit_chisq', oddball_fit_chisq)
+        setattr(self, 'oddball_fit', single_star_model(oddball_fit_labels))
+        setattr(self, 'oddball_fit_training_density', training_density(oddball_fit_labels))
+
             
     def plot(self):
 
@@ -123,4 +140,17 @@ class GaiaSpectrum(object):
         plt.tick_params(axis='x', direction='inout', length=15)
         plt.xlabel('wavelength (nm)')
         plt.show()
+
+# try to plot a star
+# if it works, open a jupyter notebook to look at an oddball :)
+elbadry_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_flux.csv')
+elbadry_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_sigma.csv')
+elbadry_binary_label_df = pd.read_csv('./data/label_dataframes/elbadry_tableE3_binaries_labels.csv')
+
+test_binary_source_id = 4346137540665080832
+test_binary_flux = elbadry_binary_flux_df[str(test_binary_source_id)]
+test_binary_sigma = elbadry_binary_sigma_df[str(test_binary_source_id)]
+
+spec = GaiaSpectrum(test_binary_source_id, test_binary_flux, test_binary_sigma)
+# import pdb;pdb.set_trace()
 
