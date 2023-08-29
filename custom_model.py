@@ -28,15 +28,15 @@ training_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma.csv')
 # load single star cannon model + wavelength
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
 
-# broad mask
-ca_idx1 = np.where((w>849) & (w<851))[0]
-ca_idx2 = np.where((w>853.5) & (w<855.5))[0]
-ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
+# # broad mask
+# ca_idx1 = np.where((w>849) & (w<851))[0]
+# ca_idx2 = np.where((w>853.5) & (w<855.5))[0]
+# ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
 
-# # this is a narrow mask
-# ca_idx1 = np.where((w>849.5) & (w<850.5))[0]
-# ca_idx2 = np.where((w>854) & (w<855))[0]
-# ca_idx3 = np.where((w>866) & (w<867))[0]
+# this is a narrow mask
+ca_idx1 = np.where((w>849.5) & (w<850.5))[0]
+ca_idx2 = np.where((w>854) & (w<855))[0]
+ca_idx3 = np.where((w>866) & (w<867))[0]
 
 # function to calculate penalty for low training density
 def density_chisq_inflation(param):
@@ -104,8 +104,14 @@ def fit_single_star(flux, sigma, mask_calcium=True, training_density_minimum=Tru
 
 		# compute chisq
 		model = single_star_model(param)
-		weights = 1/sigma_for_fit
-		resid = weights * (flux - model)
+
+		# original version to compute weights
+		weights_old = 1/sigma_for_fit
+
+		# new version to compute weights
+		weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
+
+		resid = weights * (model - flux)
 
 		# inflate chisq if labels are in low density label space
 		if training_density_minimum:
