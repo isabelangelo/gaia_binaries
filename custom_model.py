@@ -104,13 +104,7 @@ def fit_single_star(flux, sigma, mask_calcium=True, training_density_minimum=Tru
 
 		# compute chisq
 		model = single_star_model(param)
-
-		# original version to compute weights
-		weights_old = 1/sigma_for_fit
-
-		# new version to compute weights
 		weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
-
 		resid = weights * (model - flux)
 
 		# inflate chisq if labels are in low density label space
@@ -157,7 +151,7 @@ def fit_binary(flux, sigma):
 		else:
 			# compute chisq
 			model = binary_model(param1, param2)
-			weights = 1/sigma_for_fit
+			weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
 			resid = weights * (flux - model)
 
 			# inflate chisq if labels are in low density label space
