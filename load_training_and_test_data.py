@@ -12,7 +12,7 @@ import gaia
 
 ########### load data from catalogs ################################################
 # GALAH DR3 main catalog
-galah_catalog_path = './data/literature_data/survey_catalogs'
+galah_catalog_path = './data/literature_data/survey_catalogs/'
 galah_allstar_catalog = Table.read(galah_catalog_path + 'GALAH_DR3_main_allstar_v2.fits', 
     format='fits').to_pandas()
 # GALAH Gaia crossmatch for all spectra 
@@ -37,7 +37,7 @@ galah_gaia_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in g
 ########### crossmatch GALAH/gaia and filter sample ##################################
 # find GALAH stars in Gaia xmatch table
 galah_allstar_catalog_cols = ['sobject_id', 'star_id', 'teff', 'e_teff', 'logg', 'e_logg', 'fe_h', 'e_fe_h',\
-                             'alpha_fe', 'e_alpha_fe','vbroad', 'e_vbroad','v_jk']
+                             'alpha_fe', 'e_alpha_fe','vbroad', 'e_vbroad','v_jk', 'snr_c3_iraf']
 galah_gaia_xmatch_cols = ['sobject_id', 'designation']
 
 # note: merge on sobject_id based on GALAH website
@@ -104,7 +104,7 @@ query = f"SELECT dr3.designation, galah.sobject_id, dr3.source_id, \
 galah.galah_teff, galah.galah_eteff, galah.galah_logg, galah.galah_elogg, \
 galah.galah_feh, galah.galah_efeh, galah.galah_alpha, galah.galah_ealpha, \
 galah.galah_vbroad, galah.galah_evbroad, dr3.rvs_spec_sig_to_noise, \
-dr3.ra, dr3.dec \
+dr3.ra, dr3.dec, galah.snr_c3_iraf \
 FROM user_iangelo.galah_stars_gaia as galah \
 JOIN gaiadr3.gaia_source as dr3 \
 	ON dr3.designation = galah.designation \

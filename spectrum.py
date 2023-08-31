@@ -8,14 +8,14 @@ from custom_model import *
 import matplotlib.pyplot as plt
 
 # function to plot calcium mask
-def plot_calcium_mask(zorder_start):
+def plot_calcium_mask(zorder_start, alpha_value=0.8):
     pad = 0.02
     plt.axvspan(w[ca_idx1][0]-pad, w[ca_idx1[-1]]+pad, 
-        alpha=0.8, color='#E8E8E8', zorder=zorder_start, ec='w')
+        alpha=alpha_value, color='#E8E8E8', zorder=zorder_start, ec='w')
     plt.axvspan(w[ca_idx2][0]-pad, w[ca_idx2[-1]]+pad, 
-        alpha=0.8, color='#E8E8E8', zorder=zorder_start+1, ec='w')
+        alpha=alpha_value, color='#E8E8E8', zorder=zorder_start+1, ec='w')
     plt.axvspan(w[ca_idx3][0]-pad, w[ca_idx3[-1]]+pad, 
-        alpha=0.8, color='#E8E8E8', zorder=zorder_start+2, ec='w')
+        alpha=alpha_value, color='#E8E8E8', zorder=zorder_start+2, ec='w')
 
 class GaiaSpectrum(object):
     """
@@ -67,12 +67,12 @@ class GaiaSpectrum(object):
         self.secondary_fit_training_density = training_density(secondary_fit_labels)
 
         # compute improvement fraction
-        numerator = np.sum((np.abs(self.single_fit - self.flux) - \
+        f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
             np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
-        denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
-        self.f_imp = numerator/denominator
+        f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
+        self.f_imp = f_imp_numerator/f_imp_denominator
 
-        # compute calcium line residuals
+        # compute fractional calcium line residuals
         self.single_fit_ca_resid = np.sum(((self.flux - self.single_fit)/self.sigma)[ca_mask]**2)
 
     # metrics without calcium mask, training density minimum

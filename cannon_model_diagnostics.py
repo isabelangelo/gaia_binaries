@@ -291,4 +291,4 @@ plot_one_to_one(
     test_label_df, 
     test_flux_df, 
     test_sigma_df,
-    model_figure_path + 'one_to_one_test_camask_narrow_densitymin1e-7_v2.png')
+    model_figure_path + 'one_to_one_test_camask_narrow_densitymin1e-7_scatter.png')

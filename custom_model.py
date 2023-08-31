@@ -44,7 +44,7 @@ def density_chisq_inflation(param):
 	if density > 1e-7:
 		return 1
 	else:
-		return (1+np.log10(1e-7/density))
+		return np.sqrt((1+np.log10(1e-7/density)))
 
 ca_mask = np.array(list(ca_idx1) + list(ca_idx2) + list(ca_idx3))
 
