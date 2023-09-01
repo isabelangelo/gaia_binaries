@@ -19,7 +19,7 @@ def save_metric_df(label_df, flux_df, sigma_df, filename):
 	metric_data = []
 	for source_id in label_df.source_id:
 	    flux =flux_df[str(source_id)]
-	    sigma = flux_df[str(source_id)]
+	    sigma = sigma_df[str(source_id)]
 	    spec = spectrum.GaiaSpectrum(source_id, flux, sigma)
 	    spec.fit_oddball()
 	    rvs_snr = label_df[label_df.source_id == source_id].iloc[0].rvs_spec_sig_to_noise
