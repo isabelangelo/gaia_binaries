@@ -32,6 +32,7 @@ valid_mass = ~np.isnan(mass_pm2013)
 teff2Vmag = interp1d(teff_pm2013[valid_mass], V_pm2013[valid_mass])
 teff2VminusI = interp1d(teff_pm2013[valid_mass],VminusI_pm2013[valid_mass])
 teff2mass = interp1d(teff_pm2013[valid_mass], mass_pm2013[valid_mass])
+mass2teff = interp1d(mass_pm2013[valid_mass], teff_pm2013[valid_mass])
 
 def flux_weights(teff1, teff2):
     # compute relative I band flux > flux ratio

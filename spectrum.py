@@ -31,6 +31,7 @@ class GaiaSpectrum(object):
         self.source_id = source_id
         self.flux = flux
         self.sigma = sigma
+        self.rvs_snr = np.mean(self.flux/self.sigma)
 
         # masked sigma for  metric calculations
         self.sigma_ca_mask = sigma.copy()
@@ -65,6 +66,12 @@ class GaiaSpectrum(object):
         secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
         self.primary_fit_training_density = training_density(primary_fit_labels)
         self.secondary_fit_training_density = training_density(secondary_fit_labels)
+
+        # swap these if the primary has a lower teff
+        if self.binary_fit_labels[0] < self.binary_fit_labels[6]:
+            temp = self.secondary_fit_training_density
+            self.secondary_fit_training_density = self.primary_fit_training_density
+            self.primary_fit_training_density = temp
 
         # compute improvement fraction
         f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
@@ -106,7 +113,7 @@ class GaiaSpectrum(object):
         plt.plot(w, self.primary_fit, '-', color=primary_color, lw=2)
         plt.plot(w, self.secondary_fit, '-', color=secondary_color, lw=2)
         plt.plot(w, self.binary_fit, '--', color=binary_fit_color, lw=2)
-        plt.text(863,1.1,'Gaia DR3 {}'.format(self.source_id), color='k')
+        plt.text(863,1.1,'Gaia DR3 {}    S/N={}'.format(self.source_id, int(self.rvs_snr)), color='k')
         plt.text(847,0.2,'model primary, Teff={}K, training density={}'.format(
             int(self.binary_fit_labels[0]),
             "{:0.2e}".format(self.primary_fit_training_density)), color=primary_color)
@@ -137,7 +144,7 @@ class GaiaSpectrum(object):
         plt.subplot(313);plt.xlim(w.min(), w.max())
         plt.plot(w, self.flux - self.single_fit, color=single_fit_color, zorder=3)
         plt.plot(w, self.flux - self.binary_fit, color=binary_fit_color, ls='--', zorder=4)
-        ca_resid_str = r'$\Sigma$(Ca resid)$^2$={}'.format(np.round(np.log10(self.single_fit_ca_resid),2))
+        ca_resid_str = r'$\Sigma$(Ca resid)$^2$={}'.format(np.round(self.single_fit_ca_resid),2)
         plt.plot([],[], label = ca_resid_str, color='w', alpha=0)
         plt.legend(loc='upper right', frameon=False)
         plot_calcium_mask(zorder_start=0)
