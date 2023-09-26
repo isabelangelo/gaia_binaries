@@ -2,26 +2,12 @@
 contains single star model (with Calcium mask) and binary cannon model,
 and functions to fit model to data
 """
-import thecannon as tc
-from astropy.table import Table
 from custom_model_supplementary_functions import *
 from scipy.optimize import leastsq
 from astropy.io import fits
 
 # # remove warnings that come from calcium mask
 # pd.options.mode.chained_assignment = None 
-
-# =====================================================================================
-# load cannon model to use (this needs to be changed to test different models)
-single_star_model = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
-model_fileroot = 'gaia_rvs_model'
-
-training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
-training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
-training_set = training_set_table[training_labels]
-
-training_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/training_flux.csv')
-training_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma.csv')
 
 # ======================================================================================
 
@@ -49,7 +35,7 @@ def density_chisq_inflation(param):
 ca_mask = np.array(list(ca_idx1) + list(ca_idx2) + list(ca_idx3))
 
 # function to call binary model
-def binary_model(param1, param2, return_components=False):
+def binary_model(param1, param2, return_components=False, single_star_model=recent_model_version):
 	"""
 	param1 : teff, logg, feh, alpha, vbroad and RV of primary
 	param2 : teff, logg, vbroad and RV of secondary
@@ -87,7 +73,7 @@ def binary_model(param1, param2, return_components=False):
 
 
 # fit single star
-def fit_single_star(flux, sigma):
+def fit_single_star(flux, sigma, single_star_model=recent_model_version):
 	"""
 	Args:
 		flux (np.array): normalized flux data
@@ -118,7 +104,7 @@ def fit_single_star(flux, sigma):
 
 
 # fit binary
-def fit_binary(flux, sigma):
+def fit_binary(flux, sigma, single_star_model=recent_model_version):
 	"""
 	Args:
 		flux (np.array): normalized flux data
@@ -146,20 +132,12 @@ def fit_binary(flux, sigma):
 			return np.inf*np.ones(len(flux))
 		else:
 			# compute chisq
-			model = binary_model(param1, param2)
+			model = binary_model(param1, param2, single_star_model=single_star_model)
 			weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
 			resid = weights * (flux - model)
 
 			# inflate chisq if labels are in low density label space
 			density_weight = density_chisq_inflation(param1[:-1]) * density_chisq_inflation(param2_full)
-
-
-			# print mass ratio being tested
-			# q_to_print = teff2mass(param1[0])/teff2mass(param2[0])
-			# if q_to_print>1:
-			# 	print(1/q_to_print, ',', np.sum((resid * density_weight)**2), param1[1])
-			# else:
-			# 	print(q_to_print, ',', np.sum((resid * density_weight)**2), param1[1])
 			return resid * density_weight
 
 	# single optimizer

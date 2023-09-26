@@ -10,8 +10,23 @@ import numpy as np
 from astropy.io import fits
 from scipy.interpolate import interp1d
 from scipy import stats
+import thecannon as tc
+from astropy.table import Table
 
-########## calculate relative flux weights of primary,secondary ###############
+# =====================================================================================
+# load cannon models to use
+recent_model_version = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model.model')
+model_fileroot = 'gaia_rvs_model'
+
+training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
+training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
+training_set = training_set_table[training_labels]
+
+training_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/training_flux.csv')
+training_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma.csv')
+
+# =====================================================================================
+# calculate relative flux weights of primary,secondary 
 
 # speed of light for doppler shift calculation
 speed_of_light_kms = c.c.to(u.km/u.s).value
@@ -43,19 +58,17 @@ def flux_weights(teff1, teff2):
     flux1_weight = 1-flux2_weight
     return(flux1_weight, flux2_weight)
 
-
-########## compute density of training set for a given set of model parameters ########## 
-
-training_label_df = pd.read_csv('./data/label_dataframes/training_labels.csv')
-training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
+# =====================================================================================
+#compute density of training set for a given set of model parameters
+# training_label_df = pd.read_csv('./data/label_dataframes/training_labels.csv')
+# training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
+# training_data = training_label_df[training_labels].to_numpy()
+training_data = recent_model_version.training_set_labels
 
 # compute KDE from training set
-training_data = training_label_df[training_labels].to_numpy()
 training_density_kde = stats.gaussian_kde(training_data.T)
 
 def training_density(cannon_params):
     density = training_density_kde(cannon_params)[0]
     return density
-
-
 

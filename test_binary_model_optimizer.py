@@ -68,7 +68,7 @@ class SemiEmpiricalBinarySpectrum(object):
         true_param1 = self.row1[custom_model.training_labels].values.tolist() + [rv1]
         true_param2 = self.row2[['galah_teff','galah_logg','galah_vbroad']].tolist() + [rv2]
         self.true_binary_model = custom_model.binary_model(true_param1, true_param2)
-        weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.single_star_model.s2)
+        weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_version.s2)
         resid = weights * (self.true_binary_model - self.flux)
         self.true_binary_model_chisq = np.sum(resid**2)  
         

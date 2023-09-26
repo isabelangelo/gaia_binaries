@@ -11,6 +11,11 @@ def plot_calcium_mask(zorder_start, alpha_value=0.8):
     plt.axvspan(w[ca_idx3][0]-pad, w[ca_idx3[-1]]+pad, 
         alpha=alpha_value, color='#E8E8E8', zorder=zorder_start+2, ec='w')
 
+# I need to make sure that when this object calls the custom_model functions.
+# I am specifying the model
+# then I need to default it to the recent version but allow it to change
+# the problem is it's going to say single_star_model = single_star_model
+
 class GaiaSpectrum(object):
     """
     Gaia spectrum object
@@ -20,7 +25,7 @@ class GaiaSpectrum(object):
         sigma (np.array): simulated flux errors of object
         type (str): 'single' or 'binary'
     """    
-    def __init__(self, source_id, flux, sigma):
+    def __init__(self, source_id, flux, sigma, model_to_use = custom_model.recent_model_version):
         # store input data
         self.source_id = source_id
         self.flux = flux
@@ -34,17 +39,20 @@ class GaiaSpectrum(object):
         # best-fit single star
         self.single_fit_labels, self.single_fit_chisq = custom_model.fit_single_star(
             flux, 
-            sigma)
-        self.single_fit = custom_model.single_star_model(self.single_fit_labels)
+            sigma,
+            single_star_model = model_to_use)
+        self.single_fit = model_to_use(self.single_fit_labels)
         
         # best-fit binary
         self.binary_fit_labels, self.binary_fit_chisq = custom_model.fit_binary(
             flux, 
-            sigma)
+            sigma,
+            single_star_model = model_to_use)
         self.primary_fit, self.secondary_fit, self.binary_fit = custom_model.binary_model(
             self.binary_fit_labels[:6], 
             self.binary_fit_labels[6:],
-            return_components=True)
+            return_components=True,
+            single_star_model = model_to_use)
         
         # fit + binary metrics
         self.delta_chisq = self.single_fit_chisq - self.binary_fit_chisq
@@ -84,19 +92,20 @@ class GaiaSpectrum(object):
             single_fit_ca_resid_arr = (self.flux - self.single_fit)/self.sigma
             self.single_fit_ca_resid = np.sum(single_fit_ca_resid_arr[custom_model.ca_mask]**2)
 
-    # metrics without calcium mask, training density minimum
-    # i.e. model will fit to oddballs, albeit with incorrect labels
-    def fit_oddball(self):
-        # fit spectrum with no constraints on model behavior
-        oddball_fit_labels, oddball_fit_chisq = custom_model.fit_single_star(
-            self.flux, 
-            self.sigma,
-            mask_calcium=False, 
-            training_density_minimum=False)
-        setattr(self, 'oddball_fit_labels', oddball_fit_labels)
-        setattr(self, 'oddball_fit_chisq', oddball_fit_chisq)
-        setattr(self, 'oddball_fit', custom_model.single_star_model(oddball_fit_labels))
-        setattr(self, 'oddball_fit_training_density', custom_model.training_density(oddball_fit_labels))
+    # # metrics without calcium mask, training density minimum
+    # # i.e. model will fit to oddballs, albeit with incorrect labels
+    # # I don't use this for the paper do I?
+    # def fit_oddball(self):
+    #     # fit spectrum with no constraints on model behavior
+    #     oddball_fit_labels, oddball_fit_chisq = custom_model.fit_single_star(
+    #         self.flux, 
+    #         self.sigma,
+    #         mask_calcium=False, 
+    #         training_density_minimum=False)
+    #     setattr(self, 'oddball_fit_labels', oddball_fit_labels)
+    #     setattr(self, 'oddball_fit_chisq', oddball_fit_chisq)
+    #     setattr(self, 'oddball_fit', custom_model.single_star_model(oddball_fit_labels))
+    #     setattr(self, 'oddball_fit_training_density', custom_model.training_density(oddball_fit_labels))
 
             
     def plot(self):
