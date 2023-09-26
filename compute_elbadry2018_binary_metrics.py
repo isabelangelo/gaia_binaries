@@ -33,7 +33,7 @@ for source_id in elbadry_single_label_df.source_id:
 	           spec.delta_chisq, spec.single_fit_training_density, \
 	           spec.binary_fit_q, spec.f_imp, spec.binary_fit_drv]
 	single_metric_data.append(dict(zip(keys, metrics)))   
-	single_metric_df = pd.DataFrame(single_metric_data)
+single_metric_df = pd.DataFrame(single_metric_data)
 single_path = eb2018_path + 'single_metrics.csv'
 single_metric_df.to_csv(single_path)
 print('single star metrics saved to {}'.format(single_path))

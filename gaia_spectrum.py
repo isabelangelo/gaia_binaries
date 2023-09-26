@@ -1,4 +1,9 @@
+# to do : I think that the empirical class can be an inhereted class
+# from the GaiaSpectrum, but I'm not sure how at the moment.
+
 import custom_model
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # function to plot calcium mask
@@ -11,11 +16,7 @@ def plot_calcium_mask(zorder_start, alpha_value=0.8):
     plt.axvspan(w[ca_idx3][0]-pad, w[ca_idx3[-1]]+pad, 
         alpha=alpha_value, color='#E8E8E8', zorder=zorder_start+2, ec='w')
 
-# I need to make sure that when this object calls the custom_model functions.
-# I am specifying the model
-# then I need to default it to the recent version but allow it to change
-# the problem is it's going to say single_star_model = single_star_model
-
+# spectrum object for real data
 class GaiaSpectrum(object):
     """
     Gaia spectrum object
@@ -56,8 +57,14 @@ class GaiaSpectrum(object):
         
         # fit + binary metrics
         self.delta_chisq = self.single_fit_chisq - self.binary_fit_chisq
+        # compute improvement fraction
+        f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
+            np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
+        f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
+        self.f_imp = f_imp_numerator/f_imp_denominator
 
-        # metrics for binarity, moved into a function to speed up computation
+
+        # extra metrics for binarity, moved into a function to speed up computation
         def compute_binary_metrics(self):
             self.single_fit_training_density = custom_model.training_density(self.single_fit_labels)
             self.binary_fit_drv = np.abs(self.binary_fit_labels[5] - self.binary_fit_labels[-1])
@@ -81,12 +88,6 @@ class GaiaSpectrum(object):
                 temp_density = self.secondary_fit_training_density
                 self.secondary_fit_training_density = self.primary_fit_training_density
                 self.primary_fit_training_density = temp_density
-
-            # compute improvement fraction
-            f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
-                np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
-            f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
-            self.f_imp = f_imp_numerator/f_imp_denominator
 
             # compute fractional calcium line residuals
             single_fit_ca_resid_arr = (self.flux - self.single_fit)/self.sigma
@@ -166,3 +167,105 @@ class GaiaSpectrum(object):
         plt.xlabel('wavelength (nm)')
         plt.ylim(-0.1,0.1)
         plt.show()
+
+# single stars for semi-empirical binaries
+single_labels = pd.read_csv('./data/label_dataframes/elbadry_singles_labels.csv')
+single_flux = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
+single_sigma = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
+
+# spectrum object from semi-empirical binary
+# i.e., combined flux from two single stars
+class SemiEmpiricalBinarySpectrum(object):
+    def __init__(self, model_to_use = custom_model.recent_model_version):
+
+        # select random primary star   
+        self.row1 = single_labels.sample().iloc[0]
+
+        # select secondary with similar feh, alpha
+        single_labels_similar_met = single_labels.query(
+            'abs(galah_feh - @self.row1.galah_feh)<0.2 & \
+            abs(galah_alpha - @self.row1.galah_alpha)<0.1 & \
+            source_id != @self.row1.source_id')
+
+        # if there is no similar star, we can make a q=1 binary
+        if len(single_labels_similar_met)==0:
+            single_labels_similar_met = single_labels.query(
+            'abs(galah_feh - @self.row1.galah_feh)<0.25 & \
+            abs(galah_alpha - @self.row1.galah_alpha)<0.1')
+
+        self.row2 = single_labels_similar_met.sample().iloc[0]
+
+        # assert teff1>teff2
+        if self.row1.galah_teff<self.row2.galah_teff:
+            row_temp = self.row2
+            self.row2 = self.row1
+            self.row1 = row_temp
+        
+        # simulate spectrum
+        # compute rv shift
+        self.rv1 = 0
+        self.rv2 = np.random.uniform(-10,10)
+        # compute relative fluxes
+        flux1_weight, flux2_weight = custom_model.flux_weights(
+            self.row1.galah_teff, 
+            self.row2.galah_teff)
+        flux1, sigma1 = single_flux[str(self.row1.source_id)], single_sigma[str(self.row1.source_id)]
+        flux2, sigma2 = single_flux[str(self.row2.source_id)], single_sigma[str(self.row2.source_id)]
+        # shift flux2 according to drv
+        delta_w1 = custom_model.w * self.rv1/custom_model.speed_of_light_kms
+        delta_w2 = custom_model.w * self.rv2/custom_model.speed_of_light_kms
+        flux1_shifted = np.interp(custom_model.w, custom_model.w + delta_w1, flux1)
+        flux2_shifted = np.interp(custom_model.w, custom_model.w + delta_w2, flux2)
+        # compute flux + errors
+        self.primary_flux = flux1_weight*flux1_shifted
+        self.secondary_flux = flux2_weight*flux2_shifted
+        self.flux = self.primary_flux + self.secondary_flux
+        self.sigma = flux1_weight*sigma1 + flux2_weight*sigma2
+        
+        # masked sigma for  metric calculations
+        self.sigma_ca_mask = self.sigma.copy()
+        self.sigma_ca_mask[custom_model.ca_mask] = np.inf
+        
+        # best-fit single star
+        self.single_fit_labels, self.single_fit_chisq = custom_model.fit_single_star(
+            self.flux, 
+            self.sigma,
+            single_star_model = model_to_use)
+        self.single_fit = model_to_use(self.single_fit_labels)
+        
+        # best-fit binary
+        self.binary_fit_labels, self.binary_fit_chisq = custom_model.fit_binary(
+            self.flux, 
+            self.sigma,
+            single_star_model = model_to_use)
+        self.primary_fit, self.secondary_fit, self.binary_fit = custom_model.binary_model(
+            self.binary_fit_labels[:6], 
+            self.binary_fit_labels[6:],
+            return_components=True,
+            single_star_model = model_to_use)
+        
+    # store relevant information to reproduce El-Badry 2018
+    # Figures B1-B3
+    def compute_binary_detection_stats(self):
+        # best-fit binary chisq
+        self.delta_chisq = self.single_fit_chisq - self.binary_fit_chisq
+        # compute improvement fraction
+        f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
+            np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
+        f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
+        self.f_imp = f_imp_numerator/f_imp_denominator
+        # true parameters
+        self.true_teff1 = self.row1.galah_teff
+        m1 = custom_model.teff2mass(self.row1.galah_teff)
+        m2 = custom_model.teff2mass(self.row2.galah_teff)
+        self.true_q = m2/m1
+        self.true_drv = self.rv2 - self.rv1
+    
+    def compute_optimizer_stats(self):
+        # compute chi-squared of binary model with true labels
+        true_param1 = self.row1[custom_model.training_labels].values.tolist() + [self.rv1]
+        true_param2 = self.row2[['galah_teff','galah_logg','galah_vbroad']].tolist() + [self.rv2]
+        self.true_binary_model = custom_model.binary_model(true_param1, true_param2)
+        weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_model_version.s2)
+        resid = weights * (self.true_binary_model - self.flux)
+        self.true_binary_model_chisq = np.sum(resid**2)

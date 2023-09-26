@@ -262,16 +262,16 @@ model_figure_path = './data/cannon_models/'+custom_model.model_fileroot+'_figure
 # 	custom_model.training_set_table.to_pandas(),
 # 	custom_model.training_flux_df,
 # 	custom_model.training_sigma_df,
-# 	custom_model.single_star_model,
+# 	custom_model.recent_model_version,
 # 	example_bottom_filename)
 # print('bottom panel of example spectrum plot saved to {}'.format(example_bottom_filename))
 
 # # diagnostic plots from the cannon code
-# theta_figure = tc.plot.theta(custom_model.single_star_model)
+# theta_figure = tc.plot.theta(custom_model.recent_model_version)
 # theta_figure.savefig(model_figure_path + 'theta.png', dpi=300)
 # print('theta plot saved to {}'.format(model_figure_path + 'theta.png'))
 
-# scatter_figure = tc.plot.scatter(custom_model.single_star_model)
+# scatter_figure = tc.plot.scatter(custom_model.recent_model_version)
 # scatter_figure.savefig(model_figure_path + 'scatter.png', dpi=300)
 # print('pixel scatter plot saved to {}'.format(model_figure_path + 'scatter.png'))
 
