@@ -2,7 +2,7 @@
 This code computes relevant binary detection methods
 for single star and binary samples generated in load_elbadry2018_data.py
 """
-import spectrum
+import gaia_spectrum
 import pandas as pd
 
 # load data
@@ -28,7 +28,7 @@ for source_id in elbadry_single_label_df.source_id:
 	snr = row.rvs_spec_sig_to_noise.iloc[0]
 	flux = elbadry_single_flux_df[str(source_id)]
 	sigma = elbadry_single_sigma_df[str(source_id)]
-	spec = spectrum.GaiaSpectrum(source_id, flux, sigma)
+	spec = gaia_spectrum.GaiaSpectrum(source_id, flux, sigma)
 	metrics = [source_id, spec.single_fit_chisq, spec.binary_fit_chisq, \
 	           spec.delta_chisq, spec.single_fit_training_density, \
 	           spec.binary_fit_q, spec.f_imp, spec.binary_fit_drv]
@@ -45,7 +45,7 @@ for source_id in elbadry_binary_label_df.source_id:
 	snr = row.rvs_spec_sig_to_noise.iloc[0]
 	flux = elbadry_binary_flux_df[str(source_id)]
 	sigma = elbadry_binary_sigma_df[str(source_id)]
-	spec = spectrum.GaiaSpectrum(source_id, flux, sigma)
+	spec = gaia_spectrum.GaiaSpectrum(source_id, flux, sigma)
 	metrics = [source_id, spec.single_fit_chisq, spec.binary_fit_chisq, \
 	           spec.delta_chisq, spec.single_fit_training_density, \
 	           spec.binary_fit_q, spec.f_imp, spec.binary_fit_drv]

@@ -54,37 +54,40 @@ class GaiaSpectrum(object):
         
         # fit + binary metrics
         self.delta_chisq = self.single_fit_chisq - self.binary_fit_chisq
-        self.single_fit_training_density = training_density(self.single_fit_labels)
-        self.binary_fit_drv = np.abs(self.binary_fit_labels[5] - self.binary_fit_labels[-1])
-        binary_fit_m_arr = np.array([
-            teff2mass(self.binary_fit_labels[0]),
-            teff2mass(self.binary_fit_labels[6])])
-        self.binary_fit_q = np.min(binary_fit_m_arr)/np.max(binary_fit_m_arr)
 
-        # compute training density of binary components
-        self.primary_fit_labels = self.binary_fit_labels[:5]
-        self.secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
-        self.primary_fit_training_density = training_density(self.primary_fit_labels)
-        self.secondary_fit_training_density = training_density(self.secondary_fit_labels)
+        # metrics for binarity, moved into a function to speed up computation
+        def compute_binary_metrics(self):
+            self.single_fit_training_density = training_density(self.single_fit_labels)
+            self.binary_fit_drv = np.abs(self.binary_fit_labels[5] - self.binary_fit_labels[-1])
+            binary_fit_m_arr = np.array([
+                teff2mass(self.binary_fit_labels[0]),
+                teff2mass(self.binary_fit_labels[6])])
+            self.binary_fit_q = np.min(binary_fit_m_arr)/np.max(binary_fit_m_arr)
 
-        # swap these if the primary has a lower teff
-        if self.binary_fit_labels[0] < self.binary_fit_labels[6]:
-            temp_labels = self.secondary_fit_labels
-            self.secondary_fit_labels = self.primary_fit_labels
-            self.primary_fit_labels = temp_labels
+            # compute training density of binary components
+            self.primary_fit_labels = self.binary_fit_labels[:5]
+            self.secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
+            self.primary_fit_training_density = training_density(self.primary_fit_labels)
+            self.secondary_fit_training_density = training_density(self.secondary_fit_labels)
 
-            temp_density = self.secondary_fit_training_density
-            self.secondary_fit_training_density = self.primary_fit_training_density
-            self.primary_fit_training_density = temp_density
+            # swap these if the primary has a lower teff
+            if self.binary_fit_labels[0] < self.binary_fit_labels[6]:
+                temp_labels = self.secondary_fit_labels
+                self.secondary_fit_labels = self.primary_fit_labels
+                self.primary_fit_labels = temp_labels
 
-        # compute improvement fraction
-        f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
-            np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
-        f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
-        self.f_imp = f_imp_numerator/f_imp_denominator
+                temp_density = self.secondary_fit_training_density
+                self.secondary_fit_training_density = self.primary_fit_training_density
+                self.primary_fit_training_density = temp_density
 
-        # compute fractional calcium line residuals
-        self.single_fit_ca_resid = np.sum(((self.flux - self.single_fit)/self.sigma)[ca_mask]**2)
+            # compute improvement fraction
+            f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
+                np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
+            f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
+            self.f_imp = f_imp_numerator/f_imp_denominator
+
+            # compute fractional calcium line residuals
+            self.single_fit_ca_resid = np.sum(((self.flux - self.single_fit)/self.sigma)[ca_mask]**2)
 
     # metrics without calcium mask, training density minimum
     # i.e. model will fit to oddballs, albeit with incorrect labels
