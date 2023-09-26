@@ -47,14 +47,14 @@ print('{} binaries with no mass ratio reported from multi-epoch spectra'.format(
 	len(elbadry_binaries_gaia)))
 
 
-
 # merge full sample, preserving binary/single star labels
 # store type for sorting
 elbadry_stars_gaia['type'] = 'single' 
 elbadry_binaries_gaia['type'] = 'binary' # store type for sorting
 
 # make sample size the same, only preserve common columns
-elbadry_stars_left = elbadry_stars_gaia.sample(n=len(elbadry_binaries_gaia), random_state=1234)
+single_star_sample_size = 500
+elbadry_stars_left = elbadry_stars_gaia.sample(n=single_star_sample_size, random_state=1234)
 elbadry_binaries_right = elbadry_binaries_gaia[elbadry_stars_gaia.columns]
 
 
@@ -62,7 +62,7 @@ columns_to_keep = ['apogee_id','source_id','type']
 elbadry_full_sample_gaia = pd.concat(
     (elbadry_stars_left, elbadry_binaries_right))[columns_to_keep]
 print('querying equal sample sizes of N={} for single stars, binaries'.format(
-	len(elbadry_full_sample_gaia)))
+	single_star_sample_size))
 
 ########### upload to gaia to download RVS spectra ##################################
 query = f"SELECT eb2018.apogee_id, eb2018.source_id, dr3.designation, eb2018.type, \
