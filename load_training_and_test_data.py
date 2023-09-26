@@ -154,4 +154,3 @@ gaia.write_flux_data_to_fits(flux_df[training_source_ids], sigma_df[training_sou
 
 
 
-

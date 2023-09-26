@@ -1,10 +1,4 @@
-# to do : if I simulate data, 
-# make this an inherited class of Spectrum
-# and make another class called SimulatedSpectrum
-# should I add the path as a part of the initialization
-# so that it can pull the label dataframe?
-
-from custom_model import *
+import custom_model
 import matplotlib.pyplot as plt
 
 # function to plot calcium mask
@@ -35,19 +29,19 @@ class GaiaSpectrum(object):
 
         # masked sigma for  metric calculations
         self.sigma_ca_mask = sigma.copy()
-        self.sigma_ca_mask[ca_mask] = np.inf
+        self.sigma_ca_mask[custom_model.ca_mask] = np.inf
         
         # best-fit single star
-        self.single_fit_labels, self.single_fit_chisq = fit_single_star(
+        self.single_fit_labels, self.single_fit_chisq = custom_model.fit_single_star(
             flux, 
             sigma)
-        self.single_fit = single_star_model(self.single_fit_labels)
+        self.single_fit = custom_model.single_star_model(self.single_fit_labels)
         
         # best-fit binary
-        self.binary_fit_labels, self.binary_fit_chisq = fit_binary(
+        self.binary_fit_labels, self.binary_fit_chisq = custom_model.fit_binary(
             flux, 
             sigma)
-        self.primary_fit, self.secondary_fit, self.binary_fit = binary_model(
+        self.primary_fit, self.secondary_fit, self.binary_fit = custom_model.binary_model(
             self.binary_fit_labels[:6], 
             self.binary_fit_labels[6:],
             return_components=True)
@@ -57,18 +51,18 @@ class GaiaSpectrum(object):
 
         # metrics for binarity, moved into a function to speed up computation
         def compute_binary_metrics(self):
-            self.single_fit_training_density = training_density(self.single_fit_labels)
+            self.single_fit_training_density = custom_model.training_density(self.single_fit_labels)
             self.binary_fit_drv = np.abs(self.binary_fit_labels[5] - self.binary_fit_labels[-1])
             binary_fit_m_arr = np.array([
-                teff2mass(self.binary_fit_labels[0]),
-                teff2mass(self.binary_fit_labels[6])])
+                custom_model.teff2mass(self.binary_fit_labels[0]),
+                custom_model.teff2mass(self.binary_fit_labels[6])])
             self.binary_fit_q = np.min(binary_fit_m_arr)/np.max(binary_fit_m_arr)
 
             # compute training density of binary components
             self.primary_fit_labels = self.binary_fit_labels[:5]
             self.secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
-            self.primary_fit_training_density = training_density(self.primary_fit_labels)
-            self.secondary_fit_training_density = training_density(self.secondary_fit_labels)
+            self.primary_fit_training_density = custom_model.training_density(self.primary_fit_labels)
+            self.secondary_fit_training_density = custom_model.training_density(self.secondary_fit_labels)
 
             # swap these if the primary has a lower teff
             if self.binary_fit_labels[0] < self.binary_fit_labels[6]:
@@ -87,21 +81,22 @@ class GaiaSpectrum(object):
             self.f_imp = f_imp_numerator/f_imp_denominator
 
             # compute fractional calcium line residuals
-            self.single_fit_ca_resid = np.sum(((self.flux - self.single_fit)/self.sigma)[ca_mask]**2)
+            single_fit_ca_resid_arr = (self.flux - self.single_fit)/self.sigma
+            self.single_fit_ca_resid = np.sum(single_fit_ca_resid_arr[custom_model.ca_mask]**2)
 
     # metrics without calcium mask, training density minimum
     # i.e. model will fit to oddballs, albeit with incorrect labels
     def fit_oddball(self):
         # fit spectrum with no constraints on model behavior
-        oddball_fit_labels, oddball_fit_chisq = fit_single_star(
+        oddball_fit_labels, oddball_fit_chisq = custom_model.fit_single_star(
             self.flux, 
             self.sigma,
             mask_calcium=False, 
             training_density_minimum=False)
         setattr(self, 'oddball_fit_labels', oddball_fit_labels)
         setattr(self, 'oddball_fit_chisq', oddball_fit_chisq)
-        setattr(self, 'oddball_fit', single_star_model(oddball_fit_labels))
-        setattr(self, 'oddball_fit_training_density', training_density(oddball_fit_labels))
+        setattr(self, 'oddball_fit', custom_model.single_star_model(oddball_fit_labels))
+        setattr(self, 'oddball_fit_training_density', custom_model.training_density(oddball_fit_labels))
 
             
     def plot(self):
@@ -135,8 +130,8 @@ class GaiaSpectrum(object):
 
         plt.subplot(312);plt.xlim(w.min(), w.max());plt.ylim(0,1.2)
         plt.errorbar(w, self.flux, yerr=self.sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
-        plt.plot(w, self.binary_fit, color=binary_fit_color)
-        plt.plot(w, self.single_fit, color=single_fit_color, ls='--')
+        plt.plot(custom_model.w, self.binary_fit, color=binary_fit_color)
+        plt.plot(custom_model.w, self.single_fit, color=single_fit_color, ls='--')
         plt.text(847,0.1,'best-fit single star\n$\chi^2={}$'.format(np.round(self.single_fit_chisq,2)),
              color=single_fit_color)
         plt.text(850.5,0.1,'best-fit binary\n$\chi^2={}$'.format(np.round(self.binary_fit_chisq,2)),
@@ -149,8 +144,8 @@ class GaiaSpectrum(object):
         plt.tick_params(axis='x', direction='inout', length=15)
 
         plt.subplot(313);plt.xlim(w.min(), w.max())
-        plt.plot(w, self.flux - self.single_fit, color=single_fit_color, zorder=3, lw=2)
-        plt.plot(w, self.flux - self.binary_fit, color=binary_fit_color, ls='--', zorder=4)
+        plt.plot(custom_model.w, self.flux - self.single_fit, color=single_fit_color, zorder=3, lw=2)
+        plt.plot(custom_model.w, self.flux - self.binary_fit, color=binary_fit_color, ls='--', zorder=4)
         ca_resid_str = r'$\Sigma$(Ca resid)$^2$={}'.format(np.round(self.single_fit_ca_resid),2)
         plt.plot([],[], label = ca_resid_str, color='w', alpha=0)
         plt.legend(loc='upper right', frameon=False)

@@ -87,7 +87,7 @@ def binary_model(param1, param2, return_components=False):
 
 
 # fit single star
-def fit_single_star(flux, sigma, mask_calcium=True, training_density_minimum=True):
+def fit_single_star(flux, sigma):
 	"""
 	Args:
 		flux (np.array): normalized flux data
@@ -96,8 +96,7 @@ def fit_single_star(flux, sigma, mask_calcium=True, training_density_minimum=Tru
 
 	# mask out calcium triplet
 	sigma_for_fit = sigma.copy()
-	if mask_calcium:
-		sigma_for_fit[ca_mask] = np.inf
+	sigma_for_fit[ca_mask] = np.inf
 
 	# single star model goodness-of-fit
 	def residuals(param):
@@ -108,10 +107,7 @@ def fit_single_star(flux, sigma, mask_calcium=True, training_density_minimum=Tru
 		resid = weights * (model - flux)
 
 		# inflate chisq if labels are in low density label space
-		if training_density_minimum:
-			density_weight = density_chisq_inflation(param)
-		else:
-			density_weight = 1
+		density_weight = density_chisq_inflation(param)
 		return resid * density_weight
 
 	# print('running single star optimizer on 1 spectrum')

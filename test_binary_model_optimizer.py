@@ -10,12 +10,23 @@ test_flux = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
 test_sigma = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
 
 class SemiEmpiricalBinarySpectrum(object):
-    def __init__(self):      
+    def __init__(self):
+
+    	# select random primary star   
         self.row1 = test_labels.sample().iloc[0]
+
+    	# select secondary with similar feh, alpha
         test_labels_similar_met = test_labels.query(
-            'abs(galah_feh - @self.row1.galah_feh)<0.25 & \
+            'abs(galah_feh - @self.row1.galah_feh)<0.2 & \
             abs(galah_alpha - @self.row1.galah_alpha)<0.1 & \
             source_id != @self.row1.source_id')
+
+        # if there is no similar star, we can make a q=1 binary
+        if len(test_labels_similar_met)==0:
+        	test_labels_similar_met = test_labels.query(
+            'abs(galah_feh - @self.row1.galah_feh)<0.25 & \
+            abs(galah_alpha - @self.row1.galah_alpha)<0.1')
+
         self.row2 = test_labels_similar_met.sample().iloc[0]
 
         # assert teff1>teff2
@@ -63,9 +74,10 @@ class SemiEmpiricalBinarySpectrum(object):
         
 n_global_min_not_found = 0  
 for i in range(100):
-    sim_binary = SemiEmpiricalBinarySpectrum()
-    if sim_binary.binary_fit_chisq > sim_binary.true_binary_model_chisq:
-            n_global_min_not_found +=1
+	print(i)
+	sim_binary = SemiEmpiricalBinarySpectrum()
+	if sim_binary.binary_fit_chisq > sim_binary.true_binary_model_chisq:
+	        n_global_min_not_found +=1
             
 print('{}/100 fits to semi-empirical binaries did not converge \
-on a global minimum with true values'.format(n_global_min_not_found))
+on a global minimum with true values'.format(n_global_min_not_found)) 
