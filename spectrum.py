@@ -62,16 +62,20 @@ class GaiaSpectrum(object):
         self.binary_fit_q = np.min(binary_fit_m_arr)/np.max(binary_fit_m_arr)
 
         # compute training density of binary components
-        primary_fit_labels = self.binary_fit_labels[:5]
-        secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
-        self.primary_fit_training_density = training_density(primary_fit_labels)
-        self.secondary_fit_training_density = training_density(secondary_fit_labels)
+        self.primary_fit_labels = self.binary_fit_labels[:5]
+        self.secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
+        self.primary_fit_training_density = training_density(self.primary_fit_labels)
+        self.secondary_fit_training_density = training_density(self.secondary_fit_labels)
 
         # swap these if the primary has a lower teff
         if self.binary_fit_labels[0] < self.binary_fit_labels[6]:
-            temp = self.secondary_fit_training_density
+            temp_labels = self.secondary_fit_labels
+            self.secondary_fit_labels = self.primary_fit_labels
+            self.primary_fit_labels = temp_labels
+
+            temp_density = self.secondary_fit_training_density
             self.secondary_fit_training_density = self.primary_fit_training_density
-            self.primary_fit_training_density = temp
+            self.primary_fit_training_density = temp_density
 
         # compute improvement fraction
         f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
@@ -142,7 +146,7 @@ class GaiaSpectrum(object):
         plt.tick_params(axis='x', direction='inout', length=15)
 
         plt.subplot(313);plt.xlim(w.min(), w.max())
-        plt.plot(w, self.flux - self.single_fit, color=single_fit_color, zorder=3)
+        plt.plot(w, self.flux - self.single_fit, color=single_fit_color, zorder=3, lw=2)
         plt.plot(w, self.flux - self.binary_fit, color=binary_fit_color, ls='--', zorder=4)
         ca_resid_str = r'$\Sigma$(Ca resid)$^2$={}'.format(np.round(self.single_fit_ca_resid),2)
         plt.plot([],[], label = ca_resid_str, color='w', alpha=0)
@@ -153,17 +157,5 @@ class GaiaSpectrum(object):
         plt.subplots_adjust(hspace=0)
         plt.tick_params(axis='x', direction='inout', length=15)
         plt.xlabel('wavelength (nm)')
+        plt.ylim(-0.1,0.1)
         plt.show()
-
-# plot star that is not working so well at the moment
-# eb_singles_flux = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
-# eb_singles_sigma = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
-# spec = GaiaSpectrum(
-#     463016926421115520, 
-#     eb_singles_flux['463016926421115520'],
-#     eb_singles_sigma['463016926421115520'])
-
-# spec.plot()
-# plt.figure(figsize=(15,5))
-# plt.plot(w, spec.secondary_fit)
-# plt.show()

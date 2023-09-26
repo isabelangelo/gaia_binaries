@@ -34,7 +34,7 @@ elbadry_stars_gaia = elbadry_stars_gaia.query(single_query_str)
 print('{} remain with non_single_star=0, RUWE<1.4, has_rvs=True\n'.format(len(elbadry_stars_gaia)))
 
 # keep full binary sample
-print('\n{} binaries listed in El-Badry 2018 Table E1'.format(len(elbadry_binaries)))
+print('\n{} binaries listed in El-Badry 2018 Table E3'.format(len(elbadry_binaries)))
 elbadry_binaries_gaia = at.join(elbadry_binaries, gaia_apogee_xmatch, keys='apogee_id').to_pandas()
 print('{} binaries found in Gaia-APOGEE crossmatch'.format(len(elbadry_binaries_gaia)))
 elbadry_binaries_gaia = elbadry_binaries_gaia.query('has_rvs == True')
@@ -42,10 +42,11 @@ print('{} remain with has_rvs=True'.format(len(elbadry_binaries_gaia)))
 
 # remove binaries that are undetectable by our methods
 # i.e., ones found in multi-epoch spectra (reported q_dyn)
-# and ones with q<0.4 or q>0.8
-elbadry_binaries_gaia = elbadry_binaries_gaia.query("(q_dyn=='---') & (q_spec>0.4) & (q_spec<0.8)")
-print('{} binaries with 0.4<q<0.8, no mass ratio reported from multi-epoch spectra'.format(
+elbadry_binaries_gaia = elbadry_binaries_gaia.query("(q_dyn=='---')")
+print('{} binaries with no mass ratio reported from multi-epoch spectra'.format(
 	len(elbadry_binaries_gaia)))
+
+
 
 # merge full sample, preserving binary/single star labels
 # store type for sorting
@@ -64,26 +65,34 @@ print('querying equal sample sizes of N={} for single stars, binaries'.format(
 	len(elbadry_full_sample_gaia)))
 
 ########### upload to gaia to download RVS spectra ##################################
-query = f"SELECT  eb2018.apogee_id, eb2018.source_id, dr3.designation, eb2018.type, \
-dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, \
-dr3.non_single_star, dr3.ruwe, \
-dr3.teff_gspphot, dr3.logg_gspphot, dr3.mh_gspphot, dr3.vbroad \
+query = f"SELECT eb2018.apogee_id, eb2018.source_id, dr3.designation, eb2018.type, \
+dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, dr3.non_single_star, dr3.ruwe, \
+dr3.teff_gspphot, dr3.logg_gspphot, dr3.mh_gspphot, dr3.vbroad, \
+dr3.radial_velocity, dr3.radial_velocity_error, dr3.rv_nb_transits, \
+dr3.phot_g_mean_mag, dr3.bp_rp \
 FROM user_iangelo.elbadry_full_sample_gaia as eb2018 \
 JOIN gaiadr3.gaia_source as dr3 \
 ON dr3.source_id = eb2018.source_id \
 WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 30 \
+AND dr3.rvs_spec_sig_to_noise > 50 \
 AND dr3.logg_gspphot > 4"
 
 # query gaia and download RVS spectra, save to dataframes
-gaia.upload_table(elbadry_full_sample_gaia, 'elbadry_full_sample_gaia')
+#gaia.upload_table(elbadry_full_sample_gaia, 'elbadry_full_sample_gaia')
 elbadry_full_sample_gaia_results, flux_df, sigma_df = gaia.retrieve_data_and_labels(query)
-print('{} out of full sample with has_rvs = True, SNR>30'.format(len(elbadry_full_sample_gaia_results)))
+print('{} out of full sample with has_rvs = True, SNR>50'.format(len(elbadry_full_sample_gaia_results)))
 print('saving flux, flux_err to .csv files')
 
 # write single + binary labels to .csv files
 elbadry_stars_gaia_results = elbadry_full_sample_gaia_results.query("type == 'single' ")
 elbadry_binaries_gaia_results = elbadry_full_sample_gaia_results.query("type == 'binary' ")
+
+# merge with previous tables to store relevant quantities
+elbadry_binaries_gaia_results = pd.merge(
+	elbadry_binaries_gaia_results, 
+	elbadry_binaries_gaia, 
+	on='apogee_id')
+
 gaia.write_labels_to_file(
 	elbadry_stars_gaia_results, 
 	'elbadry_singles')

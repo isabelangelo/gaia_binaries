@@ -198,12 +198,3 @@ def fit_binary(flux, sigma):
 	return best_fit_labels, lowest_global_chi2
 
 
-# # fit example binary
-# elbadry_binary_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_flux.csv')
-# elbadry_binary_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_tableE3_binaries_sigma.csv')
-# elbadry_binary_label_df = pd.read_csv('./data/label_dataframes/elbadry_tableE3_binaries_labels.csv')
-
-# test_binary_source_id = 4346137540665080832
-# test_binary_flux = elbadry_binary_flux_df[str(test_binary_source_id)]
-# test_binary_sigma = elbadry_binary_sigma_df[str(test_binary_source_id)]
-# fit_binary(test_binary_flux, test_binary_sigma)
