@@ -183,20 +183,18 @@ class SemiEmpiricalBinarySpectrum(object):
 
         # select secondary with similar feh, alpha
         single_labels_similar_met = single_labels.query(
-            'abs(galah_feh - @self.row1.galah_feh)<0.2 & \
-            abs(galah_alpha - @self.row1.galah_alpha)<0.1 & \
+            'abs(mh_gspphot - @self.row1.mh_gspphot)<0.05 & \
             source_id != @self.row1.source_id')
 
         # if there is no similar star, we can make a q=1 binary
         if len(single_labels_similar_met)==0:
             single_labels_similar_met = single_labels.query(
-            'abs(galah_feh - @self.row1.galah_feh)<0.25 & \
-            abs(galah_alpha - @self.row1.galah_alpha)<0.1')
+            'abs(mh_gspphot - @self.row1.mh_gspphot)<0.05')
 
         self.row2 = single_labels_similar_met.sample().iloc[0]
 
         # assert teff1>teff2
-        if self.row1.galah_teff<self.row2.galah_teff:
+        if self.row1.teff_gspphot<self.row2.teff_gspphot:
             row_temp = self.row2
             self.row2 = self.row1
             self.row1 = row_temp
@@ -207,8 +205,8 @@ class SemiEmpiricalBinarySpectrum(object):
         self.rv2 = np.random.uniform(-10,10)
         # compute relative fluxes
         flux1_weight, flux2_weight = custom_model.flux_weights(
-            self.row1.galah_teff, 
-            self.row2.galah_teff)
+            self.row1.teff_gspphot, 
+            self.row2.teff_gspphot)
         flux1, sigma1 = single_flux[str(self.row1.source_id)], single_sigma[str(self.row1.source_id)]
         flux2, sigma2 = single_flux[str(self.row2.source_id)], single_sigma[str(self.row2.source_id)]
         # shift flux2 according to drv
@@ -255,17 +253,25 @@ class SemiEmpiricalBinarySpectrum(object):
         f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
         self.f_imp = f_imp_numerator/f_imp_denominator
         # true parameters
-        self.true_teff1 = self.row1.galah_teff
-        m1 = custom_model.teff2mass(self.row1.galah_teff)
-        m2 = custom_model.teff2mass(self.row2.galah_teff)
+        self.true_teff1 = self.row1.teff_gspphot
+        m1 = custom_model.teff2mass(self.row1.teff_gspphot)
+        m2 = custom_model.teff2mass(self.row2.teff_gspphot)
         self.true_q = m2/m1
         self.true_drv = self.rv2 - self.rv1
     
     def compute_optimizer_stats(self):
         # compute chi-squared of binary model with true labels
-        true_param1 = self.row1[custom_model.training_labels].values.tolist() + [self.rv1]
-        true_param2 = self.row2[['galah_teff','galah_logg','galah_vbroad']].tolist() + [self.rv2]
+        # note: gaia doesn't report the alpha, so I'll have to assume it's 0 for now
+        gaia_labels = ['teff_gspphot', 'logg_gspphot', 'mh_gspphot']
+        true_param1 = self.row1[gaia_labels].values.tolist() + [0] + row1['vbroad'] + [self.rv1]
+        true_param2 = self.row2[['teff_gspphot', 'logg_gspphot','vbroad']].tolist() + [self.rv2]
         self.true_binary_model = custom_model.binary_model(true_param1, true_param2)
         weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_model_version.s2)
         resid = weights * (self.true_binary_model - self.flux)
         self.true_binary_model_chisq = np.sum(resid**2)
+
+
+# problem: we don't know the labels for these...
+# I'll have to guess on alpha...
+# but let me think of the others first.
+

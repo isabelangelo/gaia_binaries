@@ -3,6 +3,7 @@ loads RVS spectra + labels for single stars + binaries from El-Badry et al 2018b
 """
 import astropy.table as at
 import pandas as pd
+import numpy as np
 import gaia
 
 ########### load data from El-Badry 2018 ################################################
@@ -53,7 +54,8 @@ elbadry_stars_gaia['type'] = 'single'
 elbadry_binaries_gaia['type'] = 'binary' # store type for sorting
 
 # make sample size the same, only preserve common columns
-single_star_sample_size = 500
+np.random.seed(1234) # set seed to sample single stars
+single_star_sample_size = 2000 # this gets roughly 500 single stars
 elbadry_stars_left = elbadry_stars_gaia.sample(n=single_star_sample_size, random_state=1234)
 elbadry_binaries_right = elbadry_binaries_gaia[elbadry_stars_gaia.columns]
 
@@ -61,7 +63,7 @@ elbadry_binaries_right = elbadry_binaries_gaia[elbadry_stars_gaia.columns]
 columns_to_keep = ['apogee_id','source_id','type']
 elbadry_full_sample_gaia = pd.concat(
     (elbadry_stars_left, elbadry_binaries_right))[columns_to_keep]
-print('querying equal sample sizes of N={} for single stars, binaries'.format(
+print('querying sample size of N={} for single stars, binaries'.format(
 	single_star_sample_size))
 
 ########### upload to gaia to download RVS spectra ##################################
@@ -90,7 +92,7 @@ elbadry_binaries_gaia_results = elbadry_full_sample_gaia_results.query("type == 
 # merge with previous tables to store relevant quantities
 elbadry_binaries_gaia_results = pd.merge(
 	elbadry_binaries_gaia_results, 
-	elbadry_binaries_gaia, 
+	elbadry_binaries.to_pandas(), 
 	on='apogee_id')
 
 gaia.write_labels_to_file(
@@ -118,4 +120,4 @@ gaia.write_flux_data_to_csv(
 	 'elbadry_tableE3_binaries')
 
 
-
+# why am I getting this error? I don't  get it iwth the de-bugger....
