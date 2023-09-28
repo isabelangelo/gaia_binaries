@@ -9,10 +9,11 @@ np.random.seed(1234)
 n_global_min_not_found = 0  
 for i in range(100):
 	print(i)
-	sim_binary = SemiEmpiricalBinarySpectrum()
-    sim_binary.compute_optimizer_stats()
+	sim_binary = gaia_spectrum.SemiEmpiricalBinarySpectrum()
+	sim_binary.compute_optimizer_stats()
 	if sim_binary.binary_fit_chisq > sim_binary.true_binary_model_chisq:
-	        n_global_min_not_found +=1
+		print('warning: fit did not converge to true minimum')
+		n_global_min_not_found +=1
             
 print('{}/100 fits to semi-empirical binaries did not converge \
 on a global minimum with true values'.format(n_global_min_not_found)) 

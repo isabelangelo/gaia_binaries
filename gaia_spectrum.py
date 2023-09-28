@@ -241,6 +241,16 @@ class SemiEmpiricalBinarySpectrum(object):
             self.binary_fit_labels[6:],
             return_components=True,
             single_star_model = model_to_use)
+
+        # assert that the primary teff > secondary teff
+        self.primary_fit_labels = self.binary_fit_labels[:5]
+        self.secondary_fit_labels = self.binary_fit_labels[np.array([6,7,2,3,8])]
+
+        # swap these if the primary has a lower teff
+        if self.binary_fit_labels[0] < self.binary_fit_labels[6]:
+            temp_labels = self.secondary_fit_labels
+            self.secondary_fit_labels = self.primary_fit_labels
+            self.primary_fit_labels = temp_labels
         
     # store relevant information to reproduce El-Badry 2018
     # Figures B1-B3
@@ -252,26 +262,40 @@ class SemiEmpiricalBinarySpectrum(object):
             np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
         f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
         self.f_imp = f_imp_numerator/f_imp_denominator
-        # true parameters
-        self.true_teff1 = self.row1.teff_gspphot
-        m1 = custom_model.teff2mass(self.row1.teff_gspphot)
-        m2 = custom_model.teff2mass(self.row2.teff_gspphot)
-        self.true_q = m2/m1
-        self.true_drv = self.rv2 - self.rv1
+        # store mass ratio
+        m1_true = custom_model.teff2mass(self.row1.teff_gspphot)
+        m2_true = custom_model.teff2mass(self.row2.teff_gspphot)
+        self.q_true = m2_true/m1_true
+
+        # store recovered parameters
+        m1_cannon = custom_model.teff2mass(self.primary_fit_labels[0])
+        m2_cannon = custom_model.teff2mass(self.secondary_fit_labels[0])
+        self.q_cannon = m2_cannon/m1_cannon
     
     def compute_optimizer_stats(self):
         # compute chi-squared of binary model with true labels
-        # note: gaia doesn't report the alpha, so I'll have to assume it's 0 for now
         gaia_labels = ['teff_gspphot', 'logg_gspphot', 'mh_gspphot']
-        true_param1 = self.row1[gaia_labels].values.tolist() + [0] + row1['vbroad'] + [self.rv1]
-        true_param2 = self.row2[['teff_gspphot', 'logg_gspphot','vbroad']].tolist() + [self.rv2]
+
+        # note: Gaia doesn't report alpha, and sometimes vbroad
+        # in this case, I'll use the cannon values
+        # and check that we found the mininum w.r.t. the other parameters
+        true_alpha = self.primary_fit_labels[3]
+        true_vbroad1 = self.row1['vbroad'];true_vbroad2 = self.row2['vbroad']
+        if np.isnan(true_vbroad1):
+            true_vbroad1 = self.primary_fit_labels[4]
+        if np.isnan(true_vbroad2):
+            true_vbroad2 = self.secondary_fit_labels[2]
+
+        true_param1 = self.row1[gaia_labels].values.tolist() + [true_alpha] + \
+                        [true_vbroad1] + [self.rv1]
+        true_param2 = self.row2[['teff_gspphot', 'logg_gspphot']].tolist() + \
+                        [true_vbroad2] + [self.rv2]
+
         self.true_binary_model = custom_model.binary_model(true_param1, true_param2)
         weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_model_version.s2)
         resid = weights * (self.true_binary_model - self.flux)
         self.true_binary_model_chisq = np.sum(resid**2)
 
-
-# problem: we don't know the labels for these...
-# I'll have to guess on alpha...
-# but let me think of the others first.
+# for testing code
+SemiEmpiricalBinarySpectrum().compute_binary_detection_stats()
 
