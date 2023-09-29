@@ -113,5 +113,5 @@ for i in range(len(training_labels)):
 		label,
 		np.mean(training_set_table[label.replace('_', '_e')])))
 
-
+# save training data from cleaned model
 

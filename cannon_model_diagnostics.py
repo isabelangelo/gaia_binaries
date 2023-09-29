@@ -238,7 +238,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 # generate diagnostic plots for single star model
 # save diagnostic plots
 model_figure_path = './data/cannon_models/'+custom_model.model_fileroot+'_figures/'
-# os.mkdir(model_figure_path)
+os.mkdir(model_figure_path)
 
 # # plot histograms of training + test sets
 # test_set = pd.read_csv('./data/label_dataframes/test_labels.csv')
@@ -249,8 +249,9 @@ model_figure_path = './data/cannon_models/'+custom_model.model_fileroot+'_figure
 # 	training_histogram_filename)
 # print('training set histrogram saved to {}'.format(training_histogram_filename))
 
-# # training set parameter space corner plot for 3 test spectra
-# example_top_filename = model_figure_path + 'example_spec_top_panel.png'
+# training set parameter space corner plot for 3 test spectra
+example_top_filename = model_figure_path + 'example_spec_top_panel.png'
+import pdb;pdb.set_trace()
 # plot_example_spec_top_panel(
 # 	custom_model.training_set.to_pandas(), 
 # 	example_top_filename)

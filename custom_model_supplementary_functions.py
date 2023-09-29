@@ -15,8 +15,8 @@ from astropy.table import Table
 
 # =====================================================================================
 # load cannon models to use
-recent_model_version = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model_TEMP.model')
-model_fileroot = 'gaia_rvs_model'
+recent_model_version = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model_cleaned.model')
+model_fileroot = 'gaia_rvs_model_cleaned'
 
 training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
