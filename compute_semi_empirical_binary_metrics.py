@@ -30,7 +30,7 @@ sim_spec_keys = [
     'rv2_cannon']
 
 sim_spec_data = []
-for i in range(500):
+for i in range(15):
     print(i)
     sim_spec = gaia_spectrum.SemiEmpiricalBinarySpectrum()
     sim_spec.compute_binary_detection_stats()
@@ -76,7 +76,7 @@ sim_spec_df = pd.DataFrame(sim_spec_data)
 # single_df = pd.DataFrame(single_data)
 
 # save data to file
-sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_v4.csv')
+sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_teff2_constrained.csv')
 #single_df.to_csv('./data/binary_metric_dataframes/single_metrics_v2.csv')
 
 # generate plots

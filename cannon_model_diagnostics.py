@@ -1,3 +1,7 @@
+# to do : store training set flux, sigma, labels for cleaned model
+# to do : write function to clean training set flux, sigma, labels and replace code
+# here and in the train_cannon_model.
+
 """
 defines functions to generate the following cannon model diagnostic plots:
 	plot_training_set() - histogram of training set labels
@@ -238,7 +242,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 # generate diagnostic plots for single star model
 # save diagnostic plots
 model_figure_path = './data/cannon_models/'+custom_model.model_fileroot+'_figures/'
-os.mkdir(model_figure_path)
+# os.mkdir(model_figure_path)
 
 # # plot histograms of training + test sets
 # test_set = pd.read_csv('./data/label_dataframes/test_labels.csv')
@@ -250,8 +254,7 @@ os.mkdir(model_figure_path)
 # print('training set histrogram saved to {}'.format(training_histogram_filename))
 
 # training set parameter space corner plot for 3 test spectra
-example_top_filename = model_figure_path + 'example_spec_top_panel.png'
-import pdb;pdb.set_trace()
+# example_top_filename = model_figure_path + 'example_spec_top_panel.png'
 # plot_example_spec_top_panel(
 # 	custom_model.training_set.to_pandas(), 
 # 	example_top_filename)
@@ -288,10 +291,11 @@ test_label_df = pd.read_csv('./data/label_dataframes/test_labels.csv')
 test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
 test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
 
+# then plot one_to_one
 plot_one_to_one(
     test_label_df, 
     test_flux_df, 
     test_sigma_df,
-    model_figure_path + 'one_to_one_test_camask_narrow_densitymin1e-7_scatter.png')
+    model_figure_path + 'one_to_one_test_lmfit.png')
 
 
