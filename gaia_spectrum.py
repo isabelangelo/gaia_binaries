@@ -247,13 +247,14 @@ class SemiEmpiricalBinarySpectrum(object):
 
         # assert that the primary teff > secondary teff
         print('true values: ', self.row1.teff_gspphot, self.row2.teff_gspphot)
+        print('fit values: ', self.primary_fit_labels[0], self.secondary_fit_labels[0])
         if self.primary_fit_labels[0] < self.secondary_fit_labels[0]:
             print('found case that doesnt obey constraint')
             #import pdb;pdb.set_trace()
             temp_labels = self.secondary_fit_labels
             self.secondary_fit_labels = self.primary_fit_labels
             self.primary_fit_labels = temp_labels
-            
+        print('')  
         # individual binary model components
         self.primary_fit, self.secondary_fit, self.binary_fit = custom_model.binary_model(
             self.primary_fit_labels, 

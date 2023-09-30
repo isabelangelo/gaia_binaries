@@ -144,23 +144,21 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 	    return resid * density_weight
 
 	fiducial_params = recent_model_version._fiducials
-	single_fit_params, best_fit_single_chisq = fit_single_star(flux, sigma)
-	def optimizer(initial_teff2):
-		print(single_fit_params[0], initial_teff2)
+	#single_fit_params, best_fit_single_chisq = fit_single_star(flux, sigma)
+	def optimizer(initial_teff):
+		#print(initial_teff)
 		# print('running single star optimizer on 1 spectrum')
 		fit_params = lmfit.Parameters()
-		
-		fit_params.add('teff1', value=single_fit_params[0], min=4000, max=8000)
-		fit_params.add('logg1',value=single_fit_params[1], min=4, max=5)
-		fit_params.add('feh',value=single_fit_params[2], min=-1.5, max=1.5)
-		fit_params.add('alpha',value=single_fit_params[3], min=-1, max=1)
-		fit_params.add('vbroad1',value=single_fit_params[4], min=0, max=100)
+		fit_params.add('teff1', value=initial_teff[0], min=4000, max=8000)
+		fit_params.add('logg1',value=fiducial_params[1], min=4, max=5)
+		fit_params.add('feh',value=fiducial_params[2], min=-1.5, max=1.5)
+		fit_params.add('alpha',value=fiducial_params[3], min=-1, max=1)
+		fit_params.add('vbroad1',value=fiducial_params[4], min=0, max=100)
 		fit_params.add('rv1', value=0, min=-20, max=20)
-		fit_params.add('teff2', value=initial_teff2, min=4000, max=8000)
+		fit_params.add('teff2', value=initial_teff[1], min=4000, max=8000)
 		fit_params.add('logg2',value=fiducial_params[1], min=4, max=5)
 		fit_params.add('vbroad2',value=fiducial_params[4], min=0, max=100)
 		fit_params.add('rv2', value=0, min=-20, max=20)
-		
 
 		# perform fit
 		result = lmfit.minimize(residuals, fit_params, method='leastsq')
@@ -168,26 +166,16 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 		chi2_fit = result.chisqr
 		return fit_labels, chi2_fit
 
-	import pdb;pdb.set_trace()
-	initial_teff2_arr = np.linspace(4000, single_fit_params[0]-100, 5)
+	initial_teff_arr = [(4100,4000), (6000,4000), (8000,4000), 
+	                   (6100,6000), (8000,6000), (8000,7900)]
 
 	# run optimizers, store fit with lowest chi2
 	lowest_global_chi2 = np.inf    
 	best_fit_labels = None
 
-	for initial_teff2 in initial_teff2_arr:
-		results = optimizer(initial_teff2)
+	for initial_teff in initial_teff_arr:
+		results = optimizer(initial_teff)
 		if results[1] < lowest_global_chi2:
 		    lowest_global_chi2 = results[1]
 		    best_fit_labels = np.array(results[0])
-	print('fit labels', best_fit_labels[0], best_fit_labels[6])
-	print('')
 	return best_fit_labels, lowest_global_chi2
-
-# let me assess what it's doing now
-# is it finding the right teff?
-# not yet, maybe I need to sample some more teff1...
-# or maybe I need to do the old sampler that doesn't depend on the single fit?
-# hmm...
-
-# if so, I hyst need to apply the constraint.

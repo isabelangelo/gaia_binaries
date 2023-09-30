@@ -120,34 +120,15 @@ galah_stars_gaia_results, flux_df, sigma_df = gaia.retrieve_data_and_labels(quer
 print('{} with has_rvs = True, snr cuts, non_single_star = 0'.format(len(galah_stars_gaia_results)))
 print('saving flux, flux_err to .csv files')
 
-# split into training + test sets
-np.random.seed(1234)
-print('splitting into training + test sets')
-source_id_list = [int(i) for i in flux_df.columns]
-n_total = len(source_id_list)
-n_training = int(0.8*n_total)
-n_test = n_total - n_training
-training_source_ids = np.random.choice(source_id_list, size=n_training, replace=False)
-test_source_ids = np.array(list((set(source_id_list) - set(training_source_ids))))
-print('{} stars saved to training set'.format(len(training_source_ids)))
-print('{} stars saved to test set'.format(len(test_source_ids)))
+# write training set labels to .csv files
+gaia.write_labels_to_file(galah_stars_gaia_results, 'training')
 
-# write training + test set labels to .csv files
-# this step needs to preserve the order of the training/test source_id lists for the canno to work
-training_label_df = galah_stars_gaia_results.set_index('source_id').loc[training_source_ids].reset_index(inplace=False)
-test_label_df = galah_stars_gaia_results.set_index('source_id').loc[test_source_ids].reset_index(inplace=False)
-
-gaia.write_labels_to_file(training_label_df, 'training')
-gaia.write_labels_to_file(test_label_df, 'test')
-
-# write training + test set flux, sigma to .csv files
-gaia.write_flux_data_to_csv(flux_df[training_source_ids], sigma_df[training_source_ids], 'training')
-gaia.write_flux_data_to_csv(flux_df[test_source_ids], sigma_df[test_source_ids], 'test')
+# write training set flux, sigma to .csv files
+gaia.write_flux_data_to_csv(flux_df, sigma_df, 'training')
+gaia.write_flux_data_to_csv(flux_df, sigma_df, 'test')
 
 # write training set flux, ivar to fits files for the cannon
-gaia.write_flux_data_to_fits(flux_df[training_source_ids], sigma_df[training_source_ids], 'training')
-
-
+gaia.write_flux_data_to_fits(flux_df, sigma_df, 'training')
 
 
 
