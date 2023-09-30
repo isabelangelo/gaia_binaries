@@ -31,6 +31,7 @@ sim_spec_keys = [
 
 sim_spec_data = []
 for i in range(500):
+    print(i)
     sim_spec = gaia_spectrum.SemiEmpiricalBinarySpectrum()
     sim_spec.compute_binary_detection_stats()
     sim_spec_values = [
@@ -75,7 +76,7 @@ sim_spec_df = pd.DataFrame(sim_spec_data)
 # single_df = pd.DataFrame(single_data)
 
 # save data to file
-sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_v3.csv')
+sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_v4.csv')
 #single_df.to_csv('./data/binary_metric_dataframes/single_metrics_v2.csv')
 
 # generate plots
