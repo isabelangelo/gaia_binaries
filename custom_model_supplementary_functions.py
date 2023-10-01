@@ -14,9 +14,10 @@ import thecannon as tc
 from astropy.table import Table
 
 # =====================================================================================
-# load cannon models to use
-recent_model_version = tc.CannonModel.read('./data/cannon_models/gaia_rvs_model_TEMP.model')
-model_fileroot = 'gaia_rvs_model_cleaned'
+# load cannon models to use + wavelength
+w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
+recent_model_fileroot = 'gaia_rvs_model_cleaned'
+recent_model_version = tc.CannonModel.read('./data/cannon_models/'+recent_model_fileroot+'.model')
 
 training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
@@ -24,6 +25,29 @@ training_set = training_set_table[training_labels]
 
 training_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/training_flux.csv')
 training_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma.csv')
+
+# =====================================================================================
+# define training density function to use in custom model fitting, post-training
+training_data = recent_model_version.training_set_labels
+training_density_kde = stats.gaussian_kde(training_data.T)
+def training_density(param):
+    density = training_density_kde(param)[0]
+    return density
+
+# =====================================================================================
+# define calcium mask
+# narrow mask
+ca_idx1 = np.where((w>849.5) & (w<850.5))[0]
+ca_idx2 = np.where((w>854) & (w<855))[0]
+ca_idx3 = np.where((w>866) & (w<867))[0]
+
+# # broad mask
+# ca_idx1 = np.where((w>849) & (w<851))[0]
+# ca_idx2 = np.where((w>853.5) & (w<855.5))[0]
+# ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
+
+# compute full mask from components
+ca_mask = np.array(list(ca_idx1) + list(ca_idx2) + list(ca_idx3))
 
 # =====================================================================================
 # calculate relative flux weights of primary,secondary 
@@ -57,18 +81,4 @@ def flux_weights(teff1, teff2):
     flux2_weight = 1/(1+f1_over_f2)
     flux1_weight = 1-flux2_weight
     return(flux1_weight, flux2_weight)
-
-# =====================================================================================
-#compute density of training set for a given set of model parameters
-# training_label_df = pd.read_csv('./data/label_dataframes/training_labels.csv')
-# training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
-# training_data = training_label_df[training_labels].to_numpy()
-training_data = recent_model_version.training_set_labels
-
-# compute KDE from training set
-training_density_kde = stats.gaussian_kde(training_data.T)
-
-def training_density(cannon_params):
-    density = training_density_kde(cannon_params)[0]
-    return density
 

@@ -10,6 +10,7 @@ defines functions to generate the following cannon model diagnostic plots:
 	one_to_one() - GALAH versus Cannon labels for sample of stars
 """
 from astropy.io import fits
+from astropy.table import Table
 import custom_model
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -101,7 +102,7 @@ def plot_example_spec_top_panel(training_label_df, figure_path):
 
 
 
-def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, figure_path):
+def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, figure_path):
 	"""
 	Plot data + cannon model fits for 3 examples from training set
 	Examples are stars with Teff=4500, 5800, 6200 K
@@ -118,6 +119,8 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, model, 
 	c6200 = 'cornflowerblue'
 	def r(value):
 		return np.round(value, 2)
+
+	model = custom_model.recent_model_version
 
 	def plot_spec(row, crow):
 	    flux = flux_df[str(row.source_id)]
@@ -173,28 +176,41 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 	"""
 	pc = 'k';markersize=1;alpha_value=0.5
 	labels_to_plot = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
+	model_to_validate = custom_model.recent_model_version
 
 	def compute_cannon_labels(label_df, flux_df, sigma_df):
+		galah_keys = labels_to_plot
+		cannon_keys = [i.replace('galah', 'cannon') for i in galah_keys]
+		vectorizer = tc.vectorizer.PolynomialVectorizer(galah_keys, 2)
 
-		galah_keys = labels_to_plot + ['rvs_spec_sig_to_noise']
-
-		cannon_keys = [key.replace('galah','cannon') for key in labels_to_plot] + ['cannon_chi_sq']
 		cannon_label_data = []
-		# iterate over each object
-		for source_id in label_df.source_id.to_numpy():
-			# store galah labels
-			row = label_df.loc[label_df.source_id==source_id]
-			galah_labels = row[galah_keys].values.flatten().tolist()
-			# retrieve data
-			flux = flux_df[str(source_id)]
-			sigma = sigma_df[str(source_id)]
+		for i in range(len(model_to_validate.training_set_labels)):
+			# store labels, flux + sigma for left out target
+			galah_labels = model_to_validate.training_set_labels[i]
+			flux = model_to_validate.training_set_flux[i]
+			sigma = 1/np.sqrt(model_to_validate.training_set_ivar[i])
 
-			# fit cannon model with custom optimizer
-			cannon_labels = custom_model.fit_single_star(flux, sigma)[0]
+			# remove left out target from training data
+			training_set_labels_leave1out = np.delete(model_to_validate.training_set_labels, i, 0)
+			training_set_leave1out = Table(training_set_labels_leave1out, names=galah_keys)
+			normalized_flux_leave1out = np.delete(model_to_validate.training_set_flux, i, 0)
+			normalized_ivar_leave1out = np.delete(model_to_validate.training_set_ivar, i, 0)
 
-			# convert to dictionary
-			keys = ['source_id'] + galah_keys + cannon_keys
-			values = [source_id] + galah_labels + cannon_labels.tolist()
+			# train model for cross validation
+			model_leave1out = tc.CannonModel(
+			    training_set_leave1out, 
+			    normalized_flux_leave1out, 
+			    normalized_ivar_leave1out,
+			    vectorizer=vectorizer, 
+			    regularization=None)
+			model_leave1out.train()
+
+			# fit cross validation model to data
+			cannon_labels, cannon_chisq = custom_model.fit_single_star(flux, sigma, single_star_model=model_leave1out)
+
+			# all these data to plot.
+			keys = galah_keys + cannon_keys
+			values = galah_labels.tolist() + cannon_labels.tolist()
 			cannon_label_data.append(dict(zip(keys, values)))
 
 		cannon_label_df = pd.DataFrame(cannon_label_data)
@@ -241,61 +257,45 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 
 # generate diagnostic plots for single star model
 # save diagnostic plots
-model_figure_path = './data/cannon_models/'+custom_model.model_fileroot+'_figures/'
-# os.mkdir(model_figure_path)
+model_figure_path = './data/cannon_models/'+custom_model.recent_model_fileroot+'_figures/'
+os.mkdir(model_figure_path)
 
-# # plot histograms of training + test sets
-# test_set = pd.read_csv('./data/label_dataframes/test_labels.csv')
-# training_histogram_filename = model_figure_path + 'training_set_plot.png'
-# plot_training_set(
-# 	custom_model.training_set.to_pandas(), 
-# 	test_set, 
-# 	training_histogram_filename)
-# print('training set histrogram saved to {}'.format(training_histogram_filename))
+# load data for plots
+training_label_df_cleaned = pd.read_csv('./data/label_dataframes/training_labels_cleaned.csv')
+training_flux_df_cleaned = pd.read_csv('./data/gaia_rvs_dataframes/training_flux_cleaned.csv')
+training_sigma_df_cleaned = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma_cleaned.csv')
 
 # training set parameter space corner plot for 3 test spectra
-# example_top_filename = model_figure_path + 'example_spec_top_panel.png'
-# plot_example_spec_top_panel(
-# 	custom_model.training_set.to_pandas(), 
-# 	example_top_filename)
-# print('top panel of example spectrum plot saved to {}'.format(example_top_filename))
+example_top_filename = model_figure_path + 'example_spec_top_panel.png'
+plot_example_spec_top_panel(
+	training_label_df_cleaned, 
+	example_top_filename)
+print('top panel of example spectrum plot saved to {}'.format(example_top_filename))
 
-# # cannon model fits for 3 test spectra
-# example_bottom_filename = model_figure_path +  'example_spec_bottom_panel.png'
-# plot_example_spec_bottom_panel(
-# 	custom_model.training_set_table.to_pandas(),
-# 	custom_model.training_flux_df,
-# 	custom_model.training_sigma_df,
-# 	custom_model.recent_model_version,
-# 	example_bottom_filename)
-# print('bottom panel of example spectrum plot saved to {}'.format(example_bottom_filename))
+# cannon model fits for 3 test spectra
+example_bottom_filename = model_figure_path +  'example_spec_bottom_panel.png'
+plot_example_spec_bottom_panel(
+	training_label_df_cleaned,
+	training_flux_df_cleaned,
+	training_sigma_df_cleaned,
+	example_bottom_filename)
+print('bottom panel of example spectrum plot saved to {}'.format(example_bottom_filename))
 
-# # diagnostic plots from the cannon code
-# theta_figure = tc.plot.theta(custom_model.recent_model_version)
-# theta_figure.savefig(model_figure_path + 'theta.png', dpi=300)
-# print('theta plot saved to {}'.format(model_figure_path + 'theta.png'))
+# diagnostic plots from the cannon code
+theta_figure = tc.plot.theta(custom_model.recent_model_version)
+theta_figure.savefig(model_figure_path + 'theta.png', dpi=300)
+print('theta plot saved to {}'.format(model_figure_path + 'theta.png'))
 
-# scatter_figure = tc.plot.scatter(custom_model.recent_model_version)
-# scatter_figure.savefig(model_figure_path + 'scatter.png', dpi=300)
-# print('pixel scatter plot saved to {}'.format(model_figure_path + 'scatter.png'))
+scatter_figure = tc.plot.scatter(custom_model.recent_model_version)
+scatter_figure.savefig(model_figure_path + 'scatter.png', dpi=300)
+print('pixel scatter plot saved to {}'.format(model_figure_path + 'scatter.png'))
 
-# plot_one_to_one(
-# 	custom_model.training_set_table.to_pandas(),
-# 	custom_model.training_flux_df,
-# 	custom_model.training_sigma_df,
-# 	model_figure_path + 'one_to_one_training.png',
-# 	path_to_save_labels = custom_model.model_fileroot+'_training_labels')
-# print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
-
-test_label_df = pd.read_csv('./data/label_dataframes/test_labels.csv')
-test_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/test_flux.csv')
-test_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/test_sigma.csv')
-
-# then plot one_to_one
 plot_one_to_one(
-    test_label_df, 
-    test_flux_df, 
-    test_sigma_df,
-    model_figure_path + 'one_to_one_test_lmfit.png')
+	training_label_df_cleaned,
+	training_flux_df_cleaned,
+	training_sigma_df_cleaned,
+	model_figure_path + 'one_to_one_training.png',
+	path_to_save_labels = custom_model.recent_model_fileroot+'_training_labels')
+print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 
 

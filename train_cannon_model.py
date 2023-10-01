@@ -86,7 +86,10 @@ model_n = model_0
 model_n_plus_1 = clean(model_0)
 n_iter = 1
 n_binaries = model_n.training_set_labels.shape[0] - model_n_plus_1.training_set_labels.shape[0]
-print('iteration {}: {} binaries found'.format(n_iter, n_binaries))
+print('iteration {}: {} binaries found, training set size = {}'.format(
+    n_iter, 
+    n_binaries, 
+    model_n_plus_1.training_set_labels.shape[0]))
 
 while n_binaries>0:
     model_n = model_n_plus_1
@@ -114,19 +117,18 @@ for i in range(len(training_labels)):
 		np.mean(training_set_table[label.replace('_', '_e')])))
 
 # save the full training set labels + flux for the cleaned model
-import pdb;pdb.set_trace()
 training_set_table_df = training_set_table.to_pandas() # need pandas version to query
 training_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/training_flux.csv')
 training_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma.csv')
 
+# determine rows from original training set that are in cleaned training set
 cleaned_model_rows = []
-for i in range(len(df)):
+for i in range(len(training_set_table_df)):
     row = training_set_table_df.iloc[i][training_labels]
     if row.values in model_cleaned.training_set_labels:
         cleaned_model_rows.append(i)
 
-import pdb;pdb.set_trace()
-
+# index training set data at indices of objects in cleaned dataset
 training_labels_cleaned = training_set_table_df.iloc[cleaned_model_rows]
 training_flux_df_cleaned = training_flux_df[[str(i) for i in training_labels_cleaned.source_id]]
 training_sigma_df_cleaned = training_sigma_df[[str(i) for i in training_labels_cleaned.source_id]]

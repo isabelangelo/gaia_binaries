@@ -25,13 +25,10 @@ ca_idx1 = np.where((w>849.5) & (w<850.5))[0]
 ca_idx2 = np.where((w>854) & (w<855))[0]
 ca_idx3 = np.where((w>866) & (w<867))[0]
 
-# function to calculate penalty for low training density
-def density_chisq_inflation(param):
-	density = training_density(param)
-	if density > 1e-7:
-		return 1
-	else:
-		return np.sqrt((1+np.log10(1e-7/density)))
+
+# =====================================================================================
+# compute KDE from training set
+
 
 ca_mask = np.array(list(ca_idx1) + list(ca_idx2) + list(ca_idx3))
 
@@ -75,39 +72,49 @@ def binary_model(param1, param2, return_components=False, single_star_model=rece
 
 # fit single star
 def fit_single_star(flux, sigma, single_star_model=recent_model_version):
-    """
-    Args:
-        flux (np.array): normalized flux data
-        sigma (np.array): flux error data
-    """
+	"""
+	Args:
+	    flux (np.array): normalized flux data
+	    sigma (np.array): flux error data
+	"""
 
-    # mask out calcium triplet
-    sigma_for_fit = sigma.copy()
-    sigma_for_fit[ca_mask] = np.inf
+	# mask out calcium triplet
+	sigma_for_fit = sigma.copy()
+	sigma_for_fit[ca_mask] = np.inf
 
-    # single star model goodness-of-fit
-    def residuals(param):
-        # compute chisq
-        model = single_star_model(param)
-        weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
-        resid = weights * (model - flux)
+	# function to calculate penalty for low training density
+	training_data = single_star_model.training_set_labels
+	training_density_kde = stats.gaussian_kde(training_data.T)
+	def density_chisq_inflation(param):
+		density = training_density_kde(param)[0]
+		if density > 1e-7:
+			return 1
+		else:
+			return np.sqrt((1+np.log10(1e-7/density)))
 
-        # inflate chisq if labels are in low density label space
-        density_weight = density_chisq_inflation(param)
-        return resid * density_weight
+	# single star model goodness-of-fit
+	def residuals(param):
+	    # compute chisq
+	    model = single_star_model(param)
+	    weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
+	    resid = weights * (model - flux)
 
-    # print('running single star optimizer on 1 spectrum')
-    fit_params = lmfit.Parameters()
-    init_params = single_star_model._fiducials
-    fit_params.add('teff', value=init_params[0], min=4000, max=8000)
-    fit_params.add('logg',value=init_params[1], min=4, max=5)
-    fit_params.add('feh',value=init_params[2], min=-1.5, max=1.5)
-    fit_params.add('alpha',value=init_params[3], min=-1, max=1)
-    fit_params.add('vbroad',value=init_params[4], min=0, max=100)
-    result = lmfit.minimize(residuals, fit_params)
-    fit_labels = np.array([value.value for key, value in result.params.items()])
-    chi2_fit = result.chisqr
-    return fit_labels, chi2_fit
+	    # inflate chisq if labels are in low density label space
+	    density_weight = density_chisq_inflation(param)
+	    return resid * density_weight
+
+	# print('running single star optimizer on 1 spectrum')
+	fit_params = lmfit.Parameters()
+	init_params = single_star_model._fiducials
+	fit_params.add('teff', value=init_params[0], min=4000, max=8000)
+	fit_params.add('logg',value=init_params[1], min=4, max=5)
+	fit_params.add('feh',value=init_params[2], min=-1.5, max=1.5)
+	fit_params.add('alpha',value=init_params[3], min=-1, max=1)
+	fit_params.add('vbroad',value=init_params[4], min=0, max=100)
+	result = lmfit.minimize(residuals, fit_params)
+	fit_labels = np.array([value.value for key, value in result.params.items()])
+	chi2_fit = result.chisqr
+	return fit_labels, chi2_fit
 
 # fit binary
 def fit_binary(flux, sigma, single_star_model=recent_model_version):
@@ -122,6 +129,16 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 	# mask out calcium triplet
 	sigma_for_fit = sigma.copy()
 	sigma_for_fit[ca_mask] = np.inf
+
+	# function to calculate penalty for low training density
+	training_data = single_star_model.training_set_labels
+	training_density_kde = stats.gaussian_kde(training_data.T)
+	def density_chisq_inflation(param):
+		density = training_density_kde(param)[0]
+		if density > 1e-7:
+			return 1
+		else:
+			return np.sqrt((1+np.log10(1e-7/density)))
 
 	# binary model goodness-of-fit
 	def residuals(params):
@@ -179,3 +196,6 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 		    lowest_global_chi2 = results[1]
 		    best_fit_labels = np.array(results[0])
 	return best_fit_labels, lowest_global_chi2
+
+
+
