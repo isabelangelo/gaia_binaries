@@ -97,21 +97,6 @@ class GaiaSpectrum(object):
         single_fit_ca_resid_arr = (self.flux - self.single_fit)/self.sigma
         self.single_fit_ca_resid = np.sum(single_fit_ca_resid_arr[custom_model.ca_mask]**2)
 
-    # # metrics without calcium mask, training density minimum
-    # # i.e. model will fit to oddballs, albeit with incorrect labels
-    # # I don't use this for the paper do I?
-    # def fit_oddball(self):
-    #     # fit spectrum with no constraints on model behavior
-    #     oddball_fit_labels, oddball_fit_chisq = custom_model.fit_single_star(
-    #         self.flux, 
-    #         self.sigma,
-    #         mask_calcium=False, 
-    #         training_density_minimum=False)
-    #     setattr(self, 'oddball_fit_labels', oddball_fit_labels)
-    #     setattr(self, 'oddball_fit_chisq', oddball_fit_chisq)
-    #     setattr(self, 'oddball_fit', custom_model.single_star_model(oddball_fit_labels))
-    #     setattr(self, 'oddball_fit_training_density', custom_model.training_density(oddball_fit_labels))
-
             
     def plot(self):
         self.compute_binary_metrics()
@@ -195,7 +180,13 @@ class SemiEmpiricalBinarySpectrum(object):
             single_labels_similar_met = single_labels.query(
             'abs(mh_gspphot - @self.row1.mh_gspphot)<0.05')
 
-        self.row2 = single_labels_similar_met.sample().iloc[0]
+        # select secondary randomly from sample
+        # self.row2 = single_labels_similar_met.sample().iloc[0]
+
+        # select secondary, requiring that teff comes from uniform distribution
+        teff2_unif = np.random.uniform(4000,self.row1.teff_gspphot)
+        teff2_unif_diff = abs(single_labels_similar_met.teff_gspphot - teff2_unif)
+        self.row2 = single_labels_similar_met.iloc[np.argmin(teff2_unif_diff)]
 
         # assert teff1>teff2
         if self.row1.teff_gspphot<self.row2.teff_gspphot:
@@ -206,7 +197,7 @@ class SemiEmpiricalBinarySpectrum(object):
         # simulate spectrum
         # compute rv shift
         self.rv1 = 0
-        self.rv2 = np.random.uniform(-10,10)
+        self.rv2 = np.random.uniform(-26,26)
         # compute relative fluxes
         flux1_weight, flux2_weight = custom_model.flux_weights(
             self.row1.teff_gspphot, 
@@ -307,7 +298,4 @@ class SemiEmpiricalBinarySpectrum(object):
         weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_model_version.s2)
         resid = weights * (self.true_binary_model - self.flux)
         self.true_binary_model_chisq = np.sum(resid**2)
-
-# for testing code
-SemiEmpiricalBinarySpectrum().compute_binary_detection_stats()
 

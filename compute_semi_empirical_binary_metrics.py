@@ -11,7 +11,7 @@ sim_spec_keys = [
     'source_id1',
     'source_id2',
     'teff1_true', 
-    'logg1_true', 
+    'logg1_true',
     'feh_true',
     'vbroad1_true',
     'vbroad2_true',
@@ -30,8 +30,9 @@ sim_spec_keys = [
     'rv2_cannon']
 
 sim_spec_data = []
-for i in range(100):
-    #print(i)
+print('computing metrics for semi-empirical synthetic binaries')
+for i in range(500):
+    print(i)
     sim_spec = gaia_spectrum.SemiEmpiricalBinarySpectrum()
     sim_spec.compute_binary_detection_stats()
     sim_spec_values = [
@@ -59,25 +60,27 @@ for i in range(100):
     sim_spec.secondary_fit_labels[5]] # cannon drv2
     sim_spec_data.append(dict(zip(sim_spec_keys, sim_spec_values)))
 sim_spec_df = pd.DataFrame(sim_spec_data)
-
-# # compute metrics for single stars from El-Badry 2018
-# single_keys = ['delta_chisq', 'f_imp']
-# single_data = []
-# for source_id in gaia_spectrum.single_labels.source_id:
-#     flux = gaia_spectrum.single_flux[str(source_id)]
-#     sigma = gaia_spectrum.single_sigma[str(source_id)]
-#     spec = gaia_spectrum.GaiaSpectrum(
-#         source_id, 
-#         flux, 
-#         sigma, 
-#         model_to_use = custom_model.recent_model_version)
-#     single_values = [spec.delta_chisq, spec.f_imp]
-#     single_data.append(dict(zip(single_keys, single_values)))
-# single_df = pd.DataFrame(single_data)
-
 # save data to file
-sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_v5.csv')
-#single_df.to_csv('./data/binary_metric_dataframes/single_metrics_v2.csv')
+sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_leastsq_drv26.csv')
+
+# compute metrics for single stars from El-Badry 2018
+single_keys = ['delta_chisq', 'f_imp']
+single_data = []
+print('computing metrics for single stars from El-Badry et al. (2018)')
+for source_id in gaia_spectrum.single_labels.source_id:
+    print(source_id)
+    flux = gaia_spectrum.single_flux[str(source_id)]
+    sigma = gaia_spectrum.single_sigma[str(source_id)]
+    spec = gaia_spectrum.GaiaSpectrum(
+        source_id, 
+        flux, 
+        sigma, 
+        model_to_use = custom_model.recent_model_version)
+    single_values = [spec.delta_chisq, spec.f_imp]
+    single_data.append(dict(zip(single_keys, single_values)))
+single_df = pd.DataFrame(single_data)
+# save data to file
+single_df.to_csv('./data/binary_metric_dataframes/single_metrics_leastsq.csv')
 
 # generate plots
 def generate_plots():
