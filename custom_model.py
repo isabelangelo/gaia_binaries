@@ -69,33 +69,30 @@ def fit_single_star(flux, sigma, single_star_model=recent_model_version):
 
 	# single star model goodness-of-fit
 	def residuals(param):
-	    # compute chisq
-	    model = single_star_model(param)
-	    weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
-	    resid = weights * (model - flux)
+		# re-parameterize from log(vbroad) to vbroad for Cannon
+		cannon_param = param.copy()
+		cannon_param[-1] = 10**cannon_param[-1]
+		# compute chisq
+		model = single_star_model(cannon_param)
+		weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
+		resid = weights * (model - flux)
 
-	    # inflate chisq if labels are in low density label space
-	    density_weight = density_chisq_inflation(param)
-	    return resid * density_weight
+		# inflate chisq if labels are in low density label space
+		density_weight = density_chisq_inflation(cannon_param)
+		return resid * density_weight
 
-	# print('running single star optimizer on 1 spectrum')
-	# fit_params = lmfit.Parameters()
-	# init_params = single_star_model._fiducials
-	# fit_params.add('teff', value=init_params[0], min=4000, max=8000)
-	# fit_params.add('logg',value=init_params[1], min=4, max=5)
-	# fit_params.add('feh',value=init_params[2], min=-1.5, max=1.5)
-	# fit_params.add('alpha',value=init_params[3], min=-1, max=1)
-	# fit_params.add('vbroad',value=init_params[4], min=0, max=100)
-	# result = lmfit.minimize(residuals, fit_params)
-	# fit_labels = np.array([value.value for key, value in result.params.items()])
-	# chi2_fit = result.chisqr
-	# return fit_labels, chi2_fit
-
-	initial_labels = single_star_model._fiducials
+	# initial labels from cannon model
+	initial_labels = single_star_model._fiducials.copy()
+	# re-parameterize from vbroad to log(vroad) in optimizer
+	initial_labels[-1] = np.log10(initial_labels[-1]) 
+	# perform fit
 	fit_labels = leastsq(residuals,x0=initial_labels)[0]
 	chi2_fit = np.sum(residuals(fit_labels)**2)
-	return fit_labels, chi2_fit
-
+	# re-parameterize from log(vbroad) to vbroad
+	fit_cannon_labels = fit_labels.copy()
+	fit_cannon_labels[-1] = 10**fit_cannon_labels[-1]
+	#print(fit_labels[-1], fit_cannon_labels[-1])
+	return fit_cannon_labels, chi2_fit
 
 
 # fit binary
@@ -124,64 +121,52 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 
 	# binary model goodness-of-fit
 	def residuals(params):
-
 		# store primary, secondary parameters
-		#param12 = [value.value for key, value in params.items()]
+		cannon_param1 = params[:6].copy()
+		cannon_param2 = params[6:].copy()
 
-		# NOTE: this line below can be removed/replaced with params
-		param12 = params 
-		param1 = param12[:6]
-		param2 = param12[6:]
-		param2_full = np.concatenate((param2[:2],param1[2:4],param2[2:3]))
+		# re-parameterize from log(vbroad) to vbroad for Cannon
+		cannon_param1[-2] = 10**cannon_param1[-2]
+		cannon_param2[-2] = 10**cannon_param2[-2]
+		cannon_param2_full = np.concatenate((cannon_param2[:2],cannon_param1[2:4],cannon_param2[2:3]))
 
 		# prevent model from regions where flux ratio can't be interpolated
-		if 2450>param1[0] or 34000<param1[0]:
+		if 2450>cannon_param1[0] or 34000<cannon_param1[0]:
 			return np.inf*np.ones(len(flux))
-		elif 2450>param2[0] or 34000<param2[0]:
+		elif 2450>cannon_param2[0] or 34000<cannon_param2[0]:
 			return np.inf*np.ones(len(flux))
 		else:
 			# compute chisq
-			model = binary_model(param1, param2, single_star_model=single_star_model)
+			model = binary_model(cannon_param1, cannon_param2, single_star_model=single_star_model)
 			weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
 			resid = weights * (flux - model)
 
 			# inflate chisq if labels are in low density label space
-			density_weight = density_chisq_inflation(param1[:-1]) * density_chisq_inflation(param2_full)
+			primary_density_weight = density_chisq_inflation(cannon_param1[:-1])
+			secondary_density_weight = density_chisq_inflation(cannon_param2_full)
+			density_weight = primary_density_weight * secondary_density_weight
 			return resid * density_weight
 
 	fiducial_params = recent_model_version._fiducials
-	#single_fit_params, best_fit_single_chisq = fit_single_star(flux, sigma)
+	
 	def optimizer(initial_teff):
-		# #print(initial_teff)
-		# # print('running single star optimizer on 1 spectrum')
-		# fit_params = lmfit.Parameters()
-		# fit_params.add('teff1', value=initial_teff[0], min=4000, max=8000)
-		# fit_params.add('logg1',value=fiducial_params[1], min=4, max=5)
-		# fit_params.add('feh',value=fiducial_params[2], min=-1.5, max=1.5)
-		# fit_params.add('alpha',value=fiducial_params[3], min=-1, max=1)
-		# fit_params.add('vbroad1',value=fiducial_params[4], min=0, max=100)
-		# fit_params.add('rv1', value=0, min=-20, max=20)
-		# fit_params.add('teff2', value=initial_teff[1], min=4000, max=8000)
-		# fit_params.add('logg2',value=fiducial_params[1], min=4, max=5)
-		# fit_params.add('vbroad2',value=fiducial_params[4], min=0, max=100)
-		# fit_params.add('rv2', value=0, min=-20, max=20)
-
-		# # perform fit
-		# result = lmfit.minimize(residuals, fit_params, method='leastsq')
-		# fit_labels = [value.value for key, value in result.params.items()]
-		# chi2_fit = result.chisqr
-		# return fit_labels, chi2_fit
-
 		# determine initial labels
 		rv_i = 0
 		teff1_i, teff2_i = initial_teff
 		logg_i, feh_i, alpha_i, vbroad_i = single_star_model._fiducials[1:]
-		initial_labels = [teff1_i, logg_i, feh_i, alpha_i, vbroad_i, rv_i, teff2_i, logg_i, vbroad_i, rv_i]
+		# re-parameterize from vbroad to log(vroad) for optimizer
+		logvbroad_i = np.log10(vbroad_i)
+		initial_labels = [teff1_i, logg_i, feh_i, alpha_i, logvbroad_i, rv_i, 
+						teff2_i, logg_i, logvbroad_i, rv_i]
 
 		# perform least-sqaures fit
 		fit_labels = leastsq(residuals,x0=initial_labels)[0]
 		chi2_fit = np.sum(residuals(fit_labels)**2)
-		return fit_labels, chi2_fit
+		# re-parameterize from log(vbroad) to vbroad
+		fit_cannon_labels = fit_labels.copy()
+		fit_cannon_labels[4] = 10**fit_cannon_labels[4]
+		fit_cannon_labels[8] = 10**fit_cannon_labels[8]
+		return fit_cannon_labels, chi2_fit
 
 	initial_teff_arr = [(4100,4000), (6000,4000), (8000,4000), 
 	                   (6100,6000), (8000,6000), (8000,7900)]

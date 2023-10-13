@@ -35,6 +35,9 @@ for i in range(500):
     print(i)
     sim_spec = gaia_spectrum.SemiEmpiricalBinarySpectrum()
     sim_spec.compute_binary_detection_stats()
+    # note: I can comment this print statement out later.
+    if sim_spec.f_imp<0:
+        print('found f_imp < 0!')
     sim_spec_values = [
     sim_spec.delta_chisq, 
     sim_spec.f_imp, 
@@ -61,7 +64,7 @@ for i in range(500):
     sim_spec_data.append(dict(zip(sim_spec_keys, sim_spec_values)))
 sim_spec_df = pd.DataFrame(sim_spec_data)
 # save data to file
-sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_leastsq_drv26.csv')
+sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_leastsq_drv26_logvbroad.csv')
 
 # compute metrics for single stars from El-Badry 2018
 single_keys = ['delta_chisq', 'f_imp']
@@ -80,7 +83,7 @@ for source_id in gaia_spectrum.single_labels.source_id:
     single_data.append(dict(zip(single_keys, single_values)))
 single_df = pd.DataFrame(single_data)
 # save data to file
-single_df.to_csv('./data/binary_metric_dataframes/single_metrics_leastsq.csv')
+single_df.to_csv('./data/binary_metric_dataframes/single_metrics_leastsq_logvbroad.csv')
 
 # generate plots
 def generate_plots():
