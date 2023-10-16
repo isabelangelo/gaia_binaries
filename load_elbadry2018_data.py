@@ -1,3 +1,5 @@
+# to do : add radial velocity error, q_dyn filters?
+# I am not including them fornow because I want to track them.
 """
 loads RVS spectra + labels for single stars + binaries from El-Badry et al 2018b
 """
@@ -41,12 +43,17 @@ print('{} binaries found in Gaia-APOGEE crossmatch'.format(len(elbadry_binaries_
 elbadry_binaries_gaia = elbadry_binaries_gaia.query('has_rvs == True')
 print('{} remain with has_rvs=True'.format(len(elbadry_binaries_gaia)))
 
-# remove binaries that are undetectable by our methods
-# i.e., ones found in multi-epoch spectra (reported q_dyn)
-elbadry_binaries_gaia = elbadry_binaries_gaia.query("(q_dyn=='---')")
-print('{} binaries with no mass ratio reported from multi-epoch spectra'.format(
-	len(elbadry_binaries_gaia)))
+# # remove binaries that are undetectable by our methods
+# # i.e., ones found in multi-epoch spectra (reported q_dyn)
+# elbadry_binaries_gaia = elbadry_binaries_gaia.query("(q_dyn=='---')")
+# print('{} binaries with no mass ratio reported from multi-epoch spectra'.format(
+# 	len(elbadry_binaries_gaia)))
 
+# # remove binaries with radial velocity error > 1km/s
+# # (possible indicator of a close binary)
+# elbadry_binaries_gaia = elbadry_binaries_gaia.query('radial_velocity_error > 1')
+# print('{} binaries with radial_velocyt_error <= 1 km/s'.format(
+# 	len(elbadry_binaries_gaia)))
 
 # merge full sample, preserving binary/single star labels
 # store type for sorting
@@ -58,7 +65,6 @@ np.random.seed(1234) # set seed to sample single stars
 single_star_sample_size = 2000 # this gets roughly 500 single stars
 elbadry_stars_left = elbadry_stars_gaia.sample(n=single_star_sample_size, random_state=1234)
 elbadry_binaries_right = elbadry_binaries_gaia[elbadry_stars_gaia.columns]
-
 
 columns_to_keep = ['apogee_id','source_id','type']
 elbadry_full_sample_gaia = pd.concat(
@@ -76,11 +82,10 @@ FROM user_iangelo.elbadry_full_sample_gaia as eb2018 \
 JOIN gaiadr3.gaia_source as dr3 \
 ON dr3.source_id = eb2018.source_id \
 WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 50 \
-AND dr3.logg_gspphot > 4"
+AND dr3.rvs_spec_sig_to_noise > 50"
 
 # query gaia and download RVS spectra, save to dataframes
-#gaia.upload_table(elbadry_full_sample_gaia, 'elbadry_full_sample_gaia')
+gaia.upload_table(elbadry_full_sample_gaia, 'elbadry_full_sample_gaia')
 elbadry_full_sample_gaia_results, flux_df, sigma_df = gaia.retrieve_data_and_labels(query)
 print('{} out of full sample with has_rvs = True, SNR>50'.format(len(elbadry_full_sample_gaia_results)))
 print('saving flux, flux_err to .csv files')

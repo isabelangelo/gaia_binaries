@@ -1,10 +1,12 @@
-# to do : I think that the empirical class can be an inhereted class
-# from the GaiaSpectrum, but I'm not sure how at the moment.
-# or at least update the GaiaSpectrum class after you have the empirical one working.
 import custom_model
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+# single stars for semi-empirical binaries
+single_labels = pd.read_csv('./data/label_dataframes/elbadry_singles_labels.csv')
+single_flux = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
+single_sigma = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
 
 # function to plot calcium mask
 def plot_calcium_mask(zorder_start, alpha_value=0.8):
@@ -28,8 +30,9 @@ class GaiaSpectrum(object):
         flux (np.array): simulated flux of object
         sigma (np.array): simulated flux errors of object
         type (str): 'single' or 'binary'
-    """    
+    """
     def __init__(self, source_id, flux, sigma, model_to_use = custom_model.recent_model_version):
+
         # store input data
         self.source_id = source_id
         self.flux = flux
@@ -42,11 +45,11 @@ class GaiaSpectrum(object):
         
         # best-fit single star
         self.single_fit_labels, self.single_fit_chisq = custom_model.fit_single_star(
-            flux, 
-            sigma,
+            self.flux, 
+            self.sigma,
             single_star_model = model_to_use)
         self.single_fit = model_to_use(self.single_fit_labels)
-
+        
         # best-fit binary
         self.binary_fit_labels, self.binary_fit_chisq = custom_model.fit_binary(
             self.flux, 
@@ -62,7 +65,7 @@ class GaiaSpectrum(object):
             temp_labels = self.secondary_fit_labels
             self.secondary_fit_labels = self.primary_fit_labels
             self.primary_fit_labels = temp_labels
-            
+
         # individual binary model components
         self.primary_fit, self.secondary_fit, self.binary_fit = custom_model.binary_model(
             self.primary_fit_labels, 
@@ -70,34 +73,35 @@ class GaiaSpectrum(object):
             return_components=True,
             single_star_model = model_to_use)
         
-        # fit + binary metrics
+    # store relevant information for binary detection
+    def compute_binary_detection_stats(self):
+        # best-fit binary chisq
         self.delta_chisq = self.single_fit_chisq - self.binary_fit_chisq
         # compute improvement fraction
         f_imp_numerator = np.sum((np.abs(self.single_fit - self.flux) - \
             np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
         f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
         self.f_imp = f_imp_numerator/f_imp_denominator
-
-
-    # extra metrics for binarity, moved into a function to speed up computation
-    def compute_binary_metrics(self):
-        self.single_fit_training_density = custom_model.training_density(self.single_fit_labels)
-        self.binary_fit_drv = np.abs(self.secondary_fit_labels[-1] - self.primary_fit_labels[0])
-        m1_true = custom_model.teff2mass(self.row1.teff_gspphot)
-        m2_true = custom_model.teff2mass(self.row2.teff_gspphot)
-        self.binary_fit_q = m2_true/m1_true
-
-        # compute training density of binary components
+        # store recovered mass ratio
+        m1_cannon = custom_model.teff2mass(self.primary_fit_labels[0])
+        m2_cannon = custom_model.teff2mass(self.secondary_fit_labels[0])
+        self.q_cannon = m2_cannon/m1_cannon
+        # compute training density of primary and secondary fits
         self.primary_fit_training_density = custom_model.training_density(
             self.primary_fit_labels[:-1])
         self.secondary_fit_training_density = custom_model.training_density(
             self.secondary_fit_labels[:-1])
-
+    
+    # store relevant information for oddball detection
+    def compute_oddball_metrics(self):
+        # compute training density of single star fit
+        self.single_fit_training_density = custom_model.training_density(
+            self.single_fit_labels)
         # compute fractional calcium line residuals
         single_fit_ca_resid_arr = (self.flux - self.single_fit)/self.sigma
         self.single_fit_ca_resid = np.sum(single_fit_ca_resid_arr[custom_model.ca_mask]**2)
 
-            
+    # plot of data + model fits     
     def plot(self):
         self.compute_binary_metrics()
         # color codes for plot
@@ -156,11 +160,6 @@ class GaiaSpectrum(object):
         plt.xlabel('wavelength (nm)')
         plt.ylim(-0.1,0.1)
         plt.show()
-
-# single stars for semi-empirical binaries
-single_labels = pd.read_csv('./data/label_dataframes/elbadry_singles_labels.csv')
-single_flux = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
-single_sigma = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
 
 # spectrum object from semi-empirical binary
 # i.e., combined flux from two single stars

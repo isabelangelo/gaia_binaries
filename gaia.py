@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 # log in to gaia archive
-Gaia.login(user='iangelo', password='@Sugargirl1994')
+Gaia.login(user='iangelo', password='#!.Eh4yShGHebfs')
 
 # Gaia RVS wavelength (for interpolating nan fluxes)
 w_interp_to = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]

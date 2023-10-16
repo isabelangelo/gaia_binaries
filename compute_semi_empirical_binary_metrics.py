@@ -1,3 +1,7 @@
+"""
+This code computes relevant binary detection metrics
+for semi-empirical synethetic binary sample
+"""
 import custom_model
 import gaia_spectrum
 import pandas as pd
@@ -66,53 +70,34 @@ sim_spec_df = pd.DataFrame(sim_spec_data)
 # save data to file
 sim_spec_df.to_csv('./data/binary_metric_dataframes/semi_empirical_binary_metrics_leastsq_drv26_logvbroad.csv')
 
-# compute metrics for single stars from El-Badry 2018
-single_keys = ['delta_chisq', 'f_imp']
-single_data = []
-print('computing metrics for single stars from El-Badry et al. (2018)')
-for source_id in gaia_spectrum.single_labels.source_id:
-    print(source_id)
-    flux = gaia_spectrum.single_flux[str(source_id)]
-    sigma = gaia_spectrum.single_sigma[str(source_id)]
-    spec = gaia_spectrum.GaiaSpectrum(
-        source_id, 
-        flux, 
-        sigma, 
-        model_to_use = custom_model.recent_model_version)
-    single_values = [spec.delta_chisq, spec.f_imp]
-    single_data.append(dict(zip(single_keys, single_values)))
-single_df = pd.DataFrame(single_data)
-# save data to file
-single_df.to_csv('./data/binary_metric_dataframes/single_metrics_leastsq_logvbroad.csv')
+# # generate plots
+# def generate_plots():
+#     # figure B1
+#     plt.rcParams['font.size']=15
+#     plt.figure(figsize=(15,8))
+#     plt.subplot(121)
+#     plt.scatter(sim_spec_df.q_true, np.log10(sim_spec_df.delta_chisq), c=sim_spec_df.drv_true,
+#            marker='o', ec='k', s=50, cmap='Reds')
+#     plt.colorbar(location='top', pad=0, label=r'$\Delta$RV (km/s)')
+#     plt.xlabel('q=m2/m1');plt.ylabel(r'log($\chi^2_{\rm single}$-$\chi^2_{\rm binary}$)')
+#     plt.subplot(122)
+#     plt.scatter(sim_spec_df.q_true, np.log10(sim_spec_df.delta_chisq), c=sim_spec_df.teff1_true,
+#            marker='o', ec='k', s=50, cmap='cool')
+#     plt.colorbar(location='top', pad=0, label=r'$T_{\rm eff}$ of primary')
+#     plt.xlabel('q=m2/m1')
+#     plt.savefig('/Users/isabelangelo/Desktop/figure_B1.png', dpi=300)
 
-# generate plots
-def generate_plots():
-    # figure B1
-    plt.rcParams['font.size']=15
-    plt.figure(figsize=(15,8))
-    plt.subplot(121)
-    plt.scatter(sim_spec_df.q_true, np.log10(sim_spec_df.delta_chisq), c=sim_spec_df.drv_true,
-           marker='o', ec='k', s=50, cmap='Reds')
-    plt.colorbar(location='top', pad=0, label=r'$\Delta$RV (km/s)')
-    plt.xlabel('q=m2/m1');plt.ylabel(r'log($\chi^2_{\rm single}$-$\chi^2_{\rm binary}$)')
-    plt.subplot(122)
-    plt.scatter(sim_spec_df.q_true, np.log10(sim_spec_df.delta_chisq), c=sim_spec_df.teff1_true,
-           marker='o', ec='k', s=50, cmap='cool')
-    plt.colorbar(location='top', pad=0, label=r'$T_{\rm eff}$ of primary')
-    plt.xlabel('q=m2/m1')
-    plt.savefig('/Users/isabelangelo/Desktop/figure_B1.png', dpi=300)
+#     # figure B2
+#     plt.figure(figsize=(8,8))
+#     plt.plot(sim_spec_df.f_imp, np.log10(sim_spec_df.delta_chisq), 'o', color='k')
+#     plt.xlabel(r'$f_{\rm imp}$')
+#     plt.ylabel(r'log($\chi^2_{\rm single}$-$\chi^2_{\rm binary}$)')
+#     plt.savefig('/Users/isabelangelo/Desktop/figure_B2.png', dpi=300)
 
-    # figure B2
-    plt.figure(figsize=(8,8))
-    plt.plot(sim_spec_df.f_imp, np.log10(sim_spec_df.delta_chisq), 'o', color='k')
-    plt.xlabel(r'$f_{\rm imp}$')
-    plt.ylabel(r'log($\chi^2_{\rm single}$-$\chi^2_{\rm binary}$)')
-    plt.savefig('/Users/isabelangelo/Desktop/figure_B2.png', dpi=300)
-
-    # figure B3
-    plt.figure(figsize=(8,8))
-    plt.hist(np.log10(single_df.delta_chisq), color='k', histtype='step')
-    plt.hist(np.log10(sim_spec_df.delta_chisq), color='r', histtype='step')
-    plt.xlabel(r'log($\chi^2_{\rm single}$-$\chi^2_{\rm binary}$)')
-    plt.ylabel('count')
-    plt.savefig('/Users/isabelangelo/Desktop/figure_B3.png', dpi=300)
+#     # figure B3
+#     plt.figure(figsize=(8,8))
+#     plt.hist(np.log10(single_df.delta_chisq), color='k', histtype='step')
+#     plt.hist(np.log10(sim_spec_df.delta_chisq), color='r', histtype='step')
+#     plt.xlabel(r'log($\chi^2_{\rm single}$-$\chi^2_{\rm binary}$)')
+#     plt.ylabel('count')
+#     plt.savefig('/Users/isabelangelo/Desktop/figure_B3.png', dpi=300)
