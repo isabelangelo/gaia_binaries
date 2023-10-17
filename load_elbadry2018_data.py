@@ -94,6 +94,10 @@ print('saving flux, flux_err to .csv files')
 elbadry_stars_gaia_results = elbadry_full_sample_gaia_results.query("type == 'single' ")
 elbadry_binaries_gaia_results = elbadry_full_sample_gaia_results.query("type == 'binary' ")
 
+# remove objects with nan teff from single stars, since I need that information 
+# to simulate synthetic binaries. but I don't want to remove the binaries...
+elbadry_stars_gaia_results = elbadry_stars_gaia_results[np.isfinite(elbadry_stars_gaia_results.teff_gspphot)]
+
 # merge with previous tables to store relevant quantities
 elbadry_binaries_gaia_results = pd.merge(
 	elbadry_binaries_gaia_results, 
@@ -123,6 +127,3 @@ gaia.write_flux_data_to_csv(
 	flux_df[binary_source_ids],
 	 sigma_df[binary_source_ids], 
 	 'elbadry_tableE3_binaries')
-
-
-# why am I getting this error? I don't  get it iwth the de-bugger....

@@ -39,9 +39,6 @@ for i in range(500):
     print(i)
     sim_spec = gaia_spectrum.SemiEmpiricalBinarySpectrum()
     sim_spec.compute_binary_detection_stats()
-    # note: I can comment this print statement out later.
-    if sim_spec.f_imp<0:
-        print('found f_imp < 0!')
     sim_spec_values = [
     sim_spec.delta_chisq, 
     sim_spec.f_imp, 
