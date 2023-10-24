@@ -110,14 +110,14 @@ class GaiaSpectrum(object):
         # compute values needed for plot
         binary_fit_drv = self.secondary_fit_labels[5] - self.primary_fit_labels[5]
         # color codes for plot
-        # primary_color='#91A8D6'
-        # secondary_color='#B03838'
-        # single_fit_color='#DEB23C'
-        # binary_fit_color = '#313DF7'
-        primary_color='b'
-        secondary_color='red'
-        single_fit_color='r'
-        binary_fit_color = 'darkcyan'
+        primary_color='#91A8D6'
+        secondary_color='#B03838'
+        single_fit_color='#DEB23C'
+        binary_fit_color = '#313DF7'
+        # primary_color='b'
+        # secondary_color='red'
+        # single_fit_color='r'
+        # binary_fit_color = 'darkcyan'
 
         # plot figure
         plt.figure(figsize=(15,10))
