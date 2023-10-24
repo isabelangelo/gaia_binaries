@@ -11,15 +11,17 @@ single_sigma = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv
 # function to plot calcium mask
 def plot_calcium_mask(zorder_start, alpha_value=0.8):
     pad = 0.02
+    #mask_color = '#E8E8E8'
+    mask_color='w'
     plt.axvspan(custom_model.w[custom_model.ca_idx1][0]-pad, 
         custom_model.w[custom_model.ca_idx1[-1]]+pad, 
-        alpha=alpha_value, color='#E8E8E8', zorder=zorder_start, ec='w')
+        alpha=alpha_value, color=mask_color, zorder=zorder_start, ec='w')
     plt.axvspan(custom_model.w[custom_model.ca_idx2][0]-pad, 
         custom_model.w[custom_model.ca_idx2[-1]]+pad, 
-        alpha=alpha_value, color='#E8E8E8', zorder=zorder_start+1, ec='w')
+        alpha=alpha_value, color=mask_color, zorder=zorder_start+1, ec='w')
     plt.axvspan(custom_model.w[custom_model.ca_idx3][0]-pad, 
         custom_model.w[custom_model.ca_idx3[-1]]+pad, 
-        alpha=alpha_value, color='#E8E8E8', zorder=zorder_start+2, ec='w')
+        alpha=alpha_value, color=mask_color, zorder=zorder_start+2, ec='w')
 
 # spectrum object for real data
 class GaiaSpectrum(object):
@@ -103,22 +105,60 @@ class GaiaSpectrum(object):
 
     # plot of data + model fits     
     def plot(self):
-        self.compute_binary_metrics()
+        self.compute_binary_detection_stats()
+        self.compute_oddball_metrics()
+        # compute values needed for plot
+        binary_fit_drv = self.secondary_fit_labels[5] - self.primary_fit_labels[5]
         # color codes for plot
-        primary_color='#91A8D6'
-        secondary_color='#B03838'
-        single_fit_color='#DEB23C'
-        binary_fit_color = '#313DF7'
+        # primary_color='#91A8D6'
+        # secondary_color='#B03838'
+        # single_fit_color='#DEB23C'
+        # binary_fit_color = '#313DF7'
+        primary_color='b'
+        secondary_color='red'
+        single_fit_color='r'
+        binary_fit_color = 'darkcyan'
 
         # plot figure
         plt.figure(figsize=(15,10))
         plt.rcParams['font.size']=10
-        plt.subplot(311);plt.xlim(custom_model.w.min(), custom_model.w.max());plt.ylim(0,1.25)
+
+        plt.subplot(311);plt.xlim(custom_model.w.min(), custom_model.w.max())
+        plt.text(863,1.05,'Gaia DR3 {}    S/N={}'.format(self.source_id, int(self.rvs_snr)), color='k', zorder=5)
+        plt.errorbar(custom_model.w, self.flux, yerr=self.sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
+        plt.plot(custom_model.w, self.binary_fit, color=binary_fit_color, lw=3)
+        plt.plot(custom_model.w, self.single_fit, color=single_fit_color, ls=(0,(1,1)), lw=3)
+        plot_calcium_mask(zorder_start=2)
+        plt.text(847,1.03,'best-fit single star\n$\chi^2={}$'.format(np.round(self.single_fit_chisq,2)),
+             color=single_fit_color)
+        plt.text(850.5,1.03,'best-fit binary\n$\chi^2={}$'.format(np.round(self.binary_fit_chisq,2)),
+             color=binary_fit_color)
+        plt.text(853.3,1.03,'$\Delta$ $\chi^2$={},\ntraining density={}'.format(
+            np.round(self.delta_chisq, decimals=2),
+            "{:0.2e}".format(self.single_fit_training_density)),
+        color='dimgrey')
+        plt.ylabel('normalized\nflux')
+        plt.ylim(0.7,1.1)
+        plt.tick_params(axis='x', direction='inout', length=15)
+
+        plt.subplot(312);plt.xlim(custom_model.w.min(), custom_model.w.max())
+        plt.plot(custom_model.w, self.flux - self.binary_fit, color=binary_fit_color, lw=3)
+        plt.plot(custom_model.w, self.flux - self.single_fit, color=single_fit_color, ls=(0,(1,1)), lw=3)
+        ca_resid_str = r'$\Sigma$(Ca resid)$^2$={}'.format(np.round(self.single_fit_ca_resid),2)
+        plt.plot([],[], label = ca_resid_str, color='w', alpha=0)
+        plt.legend(loc='upper right', frameon=False)
+        plot_calcium_mask(zorder_start=2)
+        plt.axhline(0, color='dimgrey')
+        plt.ylabel('residual')
+        plt.subplots_adjust(hspace=0)
+        plt.tick_params(axis='x', direction='inout', length=15)
+        plt.ylim(-0.1,0.1)
+
+        plt.subplot(313);plt.xlim(custom_model.w.min(), custom_model.w.max());plt.ylim(0,1.25)
         plt.errorbar(custom_model.w, self.flux, yerr=self.sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
         plt.plot(custom_model.w, self.primary_fit, '-', color=primary_color, lw=2)
         plt.plot(custom_model.w, self.secondary_fit, '-', color=secondary_color, lw=2)
-        plt.plot(custom_model.w, self.binary_fit, '--', color=binary_fit_color, lw=2)
-        plt.text(863,1.1,'Gaia DR3 {}    S/N={}'.format(self.source_id, int(self.rvs_snr)), color='k')
+        plt.plot(custom_model.w, self.binary_fit, ls=(0,(1,1)), color=binary_fit_color, lw=2)
         plt.text(847,0.2,'model primary, Teff={}K, training density={}'.format(
             int(self.binary_fit_labels[0]),
             "{:0.2e}".format(self.primary_fit_training_density)), color=primary_color)
@@ -126,39 +166,11 @@ class GaiaSpectrum(object):
             int(self.binary_fit_labels[6]),
             "{:0.2e}".format(self.secondary_fit_training_density)), color=secondary_color)
         plt.text(847,1.1,'model binary: $\Delta$RV={} km/s, m$_2$/m$_1$={}, '.format(
-            np.round(self.binary_fit_drv, decimals=2), 
-            np.round(self.binary_fit_q, decimals=2)), color=binary_fit_color)
+            np.round(binary_fit_drv, decimals=2), 
+            np.round(self.q_cannon, decimals=2)), color=binary_fit_color)
         plt.ylabel('normalized\nflux')
-        plt.tick_params(axis='x', direction='inout', length=15)
-
-        plt.subplot(312);plt.xlim(custom_model.w.min(), custom_model.w.max());plt.ylim(0,1.2)
-        plt.errorbar(custom_model.w, self.flux, yerr=self.sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
-        plt.plot(custom_model.w, self.binary_fit, color=binary_fit_color)
-        plt.plot(custom_model.w, self.single_fit, color=single_fit_color, ls='--')
-        plt.text(847,0.1,'best-fit single star\n$\chi^2={}$'.format(np.round(self.single_fit_chisq,2)),
-             color=single_fit_color)
-        plt.text(850.5,0.1,'best-fit binary\n$\chi^2={}$'.format(np.round(self.binary_fit_chisq,2)),
-             color=binary_fit_color)
-        plt.text(853.3,0.1,'$\Delta$ $\chi^2$={},\ntraining density={}'.format(
-            np.round(self.delta_chisq, decimals=2),
-            "{:0.2e}".format(self.single_fit_training_density)),
-        color='dimgrey')
-        plt.ylabel('normalized\nflux')
-        plt.tick_params(axis='x', direction='inout', length=15)
-
-        plt.subplot(313);plt.xlim(custom_model.w.min(), custom_model.w.max())
-        plt.plot(custom_model.w, self.flux - self.single_fit, color=single_fit_color, zorder=3, lw=2)
-        plt.plot(custom_model.w, self.flux - self.binary_fit, color=binary_fit_color, ls='--', zorder=4)
-        ca_resid_str = r'$\Sigma$(Ca resid)$^2$={}'.format(np.round(self.single_fit_ca_resid),2)
-        plt.plot([],[], label = ca_resid_str, color='w', alpha=0)
-        plt.legend(loc='upper right', frameon=False)
-        plot_calcium_mask(zorder_start=0)
-        plt.axhline(0, color='dimgrey')
-        plt.ylabel('residual')
-        plt.subplots_adjust(hspace=0)
-        plt.tick_params(axis='x', direction='inout', length=15)
         plt.xlabel('wavelength (nm)')
-        plt.ylim(-0.1,0.1)
+        plt.tick_params(axis='x', direction='inout', length=15)
         plt.show()
 
 # spectrum object from semi-empirical binary
