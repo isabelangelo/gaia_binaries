@@ -26,12 +26,11 @@ print(len(spocs_stars), ' stars in original SPOCS sample')
 # (these names had to be changed for the Gaia query to work)
 spocs_stars['Name'] = spocs_stars['Name'].replace('KIC-', 'KIC ', regex=True)
 spocs_stars = spocs_stars.rename(columns = {"[Fe/H]":"feh"})
+spocs_stars = spocs_stars.rename(columns = {"[M/H]":"mh"})
 
-# remove stars that the Cannon shouldn't fit
-training_label_df = pd.read_csv('./data/label_dataframes/training_labels.csv')
-vbroad_min = training_label_df.galah_vbroad.min()
-spocs_stars = spocs_stars.query('logg > 4 & Vbr > @vbroad_min')
-print(len(spocs_stars), ' stars are main sequence (logg>4, vsini within cannon label space)')
+# remove stars outside Cannon label space
+spocs_stars = spocs_stars.query('Teff>4200 & Teff<7000 & logg>4 & feh>-1 & feh<0.5 & Vsini<60')
+print(len(spocs_stars), ' stars are main sequence (logg>4, labels within cannon label space)')
 
 # Gaia crossmatch
 gaia_spocs_xmatch = pd.read_csv('./data/literature_data/Brewer2016/gaia_spocs_xmatch.csv')
@@ -53,8 +52,9 @@ spocs_stars_gaia = spocs_stars_gaia.drop_duplicates(
 print(len(spocs_stars_gaia), ' remain after removing duplicate Gaia sources')
 
 # query to run in Gaia
-query = f"SELECT spocs.source_id, spocs.target_id, spocs.Teff, spocs.logg, spocs.feh, \
-spocs.Vbr, dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, \
+query = f"SELECT spocs.source_id, spocs.target_id, spocs.Teff, spocs.logg, spocs.feh, spocs.Vbr, \
+dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, dr3.non_single_star, dr3.ruwe, \
+dr3.radial_velocity, dr3.radial_velocity_error, dr3.rv_nb_transits,\
 ap.teff_gspphot, ap.teff_gspphot_lower, ap.teff_gspphot_upper,   \
 ap.logg_gspphot, ap.logg_gspphot_lower, ap.logg_gspphot_upper,   \
 ap.mh_gspphot, ap.mh_gspphot_lower, ap.mh_gspphot_upper, \
@@ -69,14 +69,15 @@ JOIN gaiadr3.gaia_source as dr3    \
     ON dr3.source_id = spocs.source_id \
 JOIN gaiadr3.astrophysical_parameters as ap \
     ON ap.source_id = dr3.source_id \
-WHERE dr3.has_rvs = 'True'"
+WHERE dr3.has_rvs = 'True' \
+AND dr3.rvs_spec_sig_to_noise > 50"
 
 # upload CKS star IDs to Gaia
-# gaia.upload_table(spocs_stars_gaia, 'spocs_stars_gaia')
+gaia.upload_table(spocs_stars_gaia, 'spocs_stars_gaia')
 
 # download data
 spocs_stars_gaia_results, spocs_flux_df, spocs_sigma_df = gaia.retrieve_data_and_labels(query)
-print(len(spocs_stars_gaia_results), 'stars with RVS spectra in DR3')
+print(len(spocs_stars_gaia_results), 'SPOCS stars with RVS spectra in DR3 + SNR>50')
 
 # save data to .csv files
 gaia.write_labels_to_file(spocs_stars_gaia_results, 'spocs')

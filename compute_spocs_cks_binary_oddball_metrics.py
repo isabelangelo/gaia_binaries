@@ -11,8 +11,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# SPOCS data from Brewer et al. (2018)
-spocs_labels = pd.read_csv('./data/label_dataframes/spocs_labels.csv')
+# SPOCS data from Brewer et al. (2018).query('rvs_spec_sig_to_noise>50')
 spocs_flux = pd.read_csv('./data/gaia_rvs_dataframes/spocs_flux.csv')
 spocs_sigma = pd.read_csv('./data/gaia_rvs_dataframes/spocs_sigma.csv')
 
@@ -20,6 +19,10 @@ spocs_sigma = pd.read_csv('./data/gaia_rvs_dataframes/spocs_sigma.csv')
 cks_labels = pd.read_csv('./data/label_dataframes/cks_labels.csv')
 cks_flux = pd.read_csv('./data/gaia_rvs_dataframes/cks_flux.csv')
 cks_sigma = pd.read_csv('./data/gaia_rvs_dataframes/cks_sigma.csv')
+
+# remove low SNR targets
+spocs_labels = spocs_labels.query('rvs_spec_sig_to_noise>50')
+cks_labels = cks_labels.query('rvs_spec_sig_to_noise>50')
 
 # compute metrics
 spocs_keys = [

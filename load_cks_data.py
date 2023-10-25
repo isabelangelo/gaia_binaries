@@ -15,11 +15,10 @@ cks_stars = pd.read_csv('./data/literature_data/cks_physical_merged.csv')
 cks_stars = cks_stars.drop_duplicates('id_kic').iloc[:,1:] 
 print(len(cks_stars), ' unique stars in CKS sample')
 
-# remove stars that the Cannon shouldn't fit
-training_label_df = pd.read_csv('./data/label_dataframes/training_labels.csv')
-vbroad_min = training_label_df.galah_vbroad.min()
-cks_stars = cks_stars.query('cks_slogg > 4 & cks_svsini > @vbroad_min')
-print(len(cks_stars), ' stars are main sequence (logg>4, vsini within cannon label space)')
+# remove stars outside Cannon label space
+cks_stars = cks_stars.query(
+	'cks_steff>4200 & cks_steff<7000 & cks_slogg>4 & cks_smet>-1 & cks_smet<0.5 & cks_svsini<60')
+print(len(cks_stars), ' stars are main sequence (logg>4, labels within cannon label space)')
 
 # Gaia crossmatch
 gaia_kepler_xmatch = Table.read(
@@ -41,7 +40,8 @@ cks.cks_steff, cks.cks_steff_err1, cks.cks_steff_err2, \
 cks.cks_slogg, cks.cks_slogg_err1, cks.cks_slogg_err2, \
 cks.cks_smet, cks.cks_smet_err1, cks.cks_smet_err2, \
 cks.cks_svsini, cks.cks_svsini_err1, cks.cks_svsini_err2, \
-dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, \
+dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, dr3.non_single_star, dr3.ruwe, \
+dr3.radial_velocity, dr3.radial_velocity_error, dr3.rv_nb_transits,\
 ap.teff_gspphot, ap.teff_gspphot_lower, ap.teff_gspphot_upper, \
 ap.logg_gspphot, ap.logg_gspphot_lower, ap.logg_gspphot_upper, \
 ap.mh_gspphot, ap.mh_gspphot_lower, ap.mh_gspphot_upper, \
@@ -56,14 +56,19 @@ JOIN gaiadr3.gaia_source as dr3 \
     ON dr3.source_id = cks.source_id \
 JOIN gaiadr3.astrophysical_parameters as ap \
     ON ap.source_id = dr3.source_id \
-WHERE dr3.has_rvs = 'True'"
+WHERE dr3.has_rvs = 'True' \
+AND dr3.rvs_spec_sig_to_noise > 50"
+
+# edit column datatypes
+# (this is needed for the Gaia query to work)
+cks_stars_gaia['cks_fp'] = cks_stars_gaia['cks_fp'].astype('str')
 
 # upload CKS star IDs to Gaia
-gaia.upload_table(cks_stars_gaia, 'cks_stars_gaia')
+#gaia.upload_table(cks_stars_gaia, 'cks_stars_gaia')
 
 # download data
 cks_stars_gaia_results, cks_flux_df, cks_sigma_df = gaia.retrieve_data_and_labels(query)
-print(len(cks_stars_gaia_results), 'stars with RVS spectra in DR3')
+print(len(cks_stars_gaia_results), 'CKS stars with RVS spectra in DR3 + SNR>50')
 
 # save data to .csv files
 gaia.write_labels_to_file(cks_stars_gaia_results, 'cks')

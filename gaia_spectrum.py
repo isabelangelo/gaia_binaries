@@ -126,8 +126,8 @@ class GaiaSpectrum(object):
         plt.subplot(311);plt.xlim(custom_model.w.min(), custom_model.w.max())
         plt.text(863,1.05,'Gaia DR3 {}    S/N={}'.format(self.source_id, int(self.rvs_snr)), color='k', zorder=5)
         plt.errorbar(custom_model.w, self.flux, yerr=self.sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
-        plt.plot(custom_model.w, self.binary_fit, color=binary_fit_color, lw=3)
-        plt.plot(custom_model.w, self.single_fit, color=single_fit_color, ls=(0,(1,1)), lw=3)
+        plt.plot(custom_model.w, self.binary_fit, color=binary_fit_color, lw=4)
+        plt.plot(custom_model.w, self.single_fit, color=single_fit_color, ls=(0,()), lw=2)
         plot_calcium_mask(zorder_start=2)
         plt.text(847,1.03,'best-fit single star\n$\chi^2={}$'.format(np.round(self.single_fit_chisq,2)),
              color=single_fit_color)
@@ -142,8 +142,8 @@ class GaiaSpectrum(object):
         plt.tick_params(axis='x', direction='inout', length=15)
 
         plt.subplot(312);plt.xlim(custom_model.w.min(), custom_model.w.max())
-        plt.plot(custom_model.w, self.flux - self.binary_fit, color=binary_fit_color, lw=3)
-        plt.plot(custom_model.w, self.flux - self.single_fit, color=single_fit_color, ls=(0,(1,1)), lw=3)
+        plt.plot(custom_model.w, self.flux - self.binary_fit, color=binary_fit_color, lw=4)
+        plt.plot(custom_model.w, self.flux - self.single_fit, color=single_fit_color, ls=(0,()), lw=2)
         ca_resid_str = r'$\Sigma$(Ca resid)$^2$={}'.format(np.round(self.single_fit_ca_resid),2)
         plt.plot([],[], label = ca_resid_str, color='w', alpha=0)
         plt.legend(loc='upper right', frameon=False)
