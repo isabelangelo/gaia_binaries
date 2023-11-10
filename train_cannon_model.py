@@ -63,6 +63,7 @@ def clean(model_iter_n):
             spec_flux, 
             spec_sigma, 
             model_to_use=model_iter_n)
+        spec.compute_binary_detection_stats()
         training_set_delta_chisq[spec_idx] = spec.delta_chisq
         
     # make new training set with only objects labels as single stars   

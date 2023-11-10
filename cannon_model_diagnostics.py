@@ -254,7 +254,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 # generate diagnostic plots for single star model
 # save diagnostic plots
 model_figure_path = './data/cannon_models/'+custom_model.recent_model_fileroot+'_figures/'
-# os.mkdir(model_figure_path)
+os.mkdir(model_figure_path)
 
 # load data for plots
 training_label_df_cleaned = pd.read_csv('./data/label_dataframes/training_labels_cleaned.csv')
@@ -290,7 +290,7 @@ plot_one_to_one(
 	training_label_df_cleaned,
 	training_flux_df_cleaned,
 	training_sigma_df_cleaned,
-	model_figure_path + 'one_to_one_leastsq_logvbroad.png',
+	model_figure_path + 'one_to_one_s2_3e-3.png',
 	path_to_save_labels = custom_model.recent_model_fileroot+'_training_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 

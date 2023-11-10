@@ -1,3 +1,7 @@
+"""
+TO DO: I feel like this should be called gaia_cannon.RVSSpectrum()
+"""
+
 import custom_model
 import numpy as np
 import pandas as pd

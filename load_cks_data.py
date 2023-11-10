@@ -64,7 +64,7 @@ AND dr3.rvs_spec_sig_to_noise > 50"
 cks_stars_gaia['cks_fp'] = cks_stars_gaia['cks_fp'].astype('str')
 
 # upload CKS star IDs to Gaia
-#gaia.upload_table(cks_stars_gaia, 'cks_stars_gaia')
+gaia.upload_table(cks_stars_gaia, 'cks_stars_gaia')
 
 # download data
 cks_stars_gaia_results, cks_flux_df, cks_sigma_df = gaia.retrieve_data_and_labels(query)
