@@ -1,5 +1,6 @@
 """
 TO DO: I feel like this should be called gaia_cannon.RVSSpectrum()
+also I need to add documentation
 """
 
 import custom_model
@@ -118,10 +119,6 @@ class GaiaSpectrum(object):
         secondary_color='#B03838'
         single_fit_color='#DEB23C'
         binary_fit_color = '#313DF7'
-        # primary_color='b'
-        # secondary_color='red'
-        # single_fit_color='r'
-        # binary_fit_color = 'darkcyan'
 
         # plot figure
         plt.figure(figsize=(15,10))
@@ -213,17 +210,20 @@ class SemiEmpiricalBinarySpectrum(object):
         # compute rv shift
         self.rv1 = 0
         self.rv2 = np.random.uniform(-26,26)
+        
         # compute relative fluxes
         flux1_weight, flux2_weight = custom_model.flux_weights(
             self.row1.teff_gspphot, 
             self.row2.teff_gspphot)
         flux1, sigma1 = single_flux[str(self.row1.source_id)], single_sigma[str(self.row1.source_id)]
         flux2, sigma2 = single_flux[str(self.row2.source_id)], single_sigma[str(self.row2.source_id)]
+       
         # shift flux2 according to drv
         delta_w1 = custom_model.w * self.rv1/custom_model.speed_of_light_kms
         delta_w2 = custom_model.w * self.rv2/custom_model.speed_of_light_kms
         flux1_shifted = np.interp(custom_model.w, custom_model.w + delta_w1, flux1)
         flux2_shifted = np.interp(custom_model.w, custom_model.w + delta_w2, flux2)
+        
         # compute flux + errors
         self.primary_flux = flux1_weight*flux1_shifted
         self.secondary_flux = flux2_weight*flux2_shifted

@@ -1,5 +1,6 @@
 # to do : add radial velocity error, q_dyn filters?
 # I am not including them fornow because I want to track them.
+# also, I need to edit/remove the code that takes a sub-sample of the data.
 """
 loads RVS spectra + labels for single stars + binaries from El-Badry et al 2018b
 """
@@ -62,7 +63,7 @@ elbadry_binaries_gaia['type'] = 'binary' # store type for sorting
 
 # make sample size the same, only preserve common columns
 np.random.seed(1234) # set seed to sample single stars
-single_star_sample_size = 2000 # this gets roughly 500 single stars
+single_star_sample_size = len(elbadry_stars_gaia) # decrease to retrieve sub-sample
 elbadry_stars_left = elbadry_stars_gaia.sample(n=single_star_sample_size, random_state=1234)
 elbadry_binaries_right = elbadry_binaries_gaia[elbadry_stars_gaia.columns]
 
@@ -77,7 +78,8 @@ query = f"SELECT eb2018.apogee_id, eb2018.source_id, dr3.designation, eb2018.typ
 dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, dr3.non_single_star, dr3.ruwe, \
 dr3.teff_gspphot, dr3.logg_gspphot, dr3.mh_gspphot, dr3.vbroad, \
 dr3.radial_velocity, dr3.radial_velocity_error, dr3.rv_nb_transits, \
-dr3.phot_g_mean_mag, dr3.bp_rp \
+dr3.phot_g_mean_mag, dr3.bp_rp, \
+dr3.grvs_mag, dr3.grvs_mag_error \
 FROM user_iangelo.elbadry_full_sample_gaia as eb2018 \
 JOIN gaiadr3.gaia_source as dr3 \
 ON dr3.source_id = eb2018.source_id \
