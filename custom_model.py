@@ -61,11 +61,15 @@ def fit_single_star(flux, sigma, single_star_model=recent_model_version):
 	training_data = single_star_model.training_set_labels
 	training_density_kde = stats.gaussian_kde(training_data.T)
 	def density_chisq_inflation(param):
-		density = training_density_kde(param)[0]
-		if density > 1e-7:
-			return 1
+		# require finite parameters
+		if False in np.isfinite(param):
+			return np.inf
 		else:
-			return np.sqrt((1+np.log10(1e-7/density)))
+			density = training_density_kde(param)[0]
+			if density > 1e-7:
+				return 1
+			else:
+				return np.sqrt((1+np.log10(1e-7/density)))
 
 	# single star model goodness-of-fit
 	def residuals(param):
@@ -113,11 +117,15 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 	training_data = single_star_model.training_set_labels
 	training_density_kde = stats.gaussian_kde(training_data.T)
 	def density_chisq_inflation(param):
-		density = training_density_kde(param)[0]
-		if density > 1e-7:
-			return 1
+		# require finite parameters
+		if False in np.isfinite(param):
+			return np.inf
 		else:
-			return np.sqrt((1+np.log10(1e-7/density)))
+			density = training_density_kde(param)[0]
+			if density > 1e-7:
+				return 1
+			else:
+				return np.sqrt((1+np.log10(1e-7/density)))
 
 	# binary model goodness-of-fit
 	def residuals(params):
@@ -168,8 +176,14 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 		fit_cannon_labels[8] = 10**fit_cannon_labels[8]
 		return fit_cannon_labels, chi2_fit
 
+	# initial_teff_arr = [(4100,4000), (6000,4000), (8000,4000), 
+ #                   (6100,6000), (8000,6000), (8000,7900)]
+
 	initial_teff_arr = [(4100,4000), (6000,4000), (8000,4000), 
-	                   (6100,6000), (8000,6000), (8000,7900)]
+	                   (6100,6000), (8000,6000), (8000,7900),
+	                   (5000,4000), (7000,4000), (7000,5000), 
+	                   (7000,6000), (6000,5000), (5000,5000),
+	                   (7000,7000), (8000,5000), (8000,7000)]
 
 	# run optimizers, store fit with lowest chi2
 	lowest_global_chi2 = np.inf    
@@ -177,6 +191,7 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 
 	for initial_teff in initial_teff_arr:
 		results = optimizer(initial_teff)
+		#print(results[0][0], results[0][6], results[1])
 		if results[1] < lowest_global_chi2:
 		    lowest_global_chi2 = results[1]
 		    best_fit_labels = np.array(results[0])

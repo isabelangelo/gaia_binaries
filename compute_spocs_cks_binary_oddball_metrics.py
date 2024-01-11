@@ -40,6 +40,19 @@ spocs_keys = [
 	'single_fit_ca_resid'
 	]
 
+# test on Gaia DR3 2131133261560058496
+source_id = 2131133261560058496
+flux = spocs_flux[str(source_id)]
+sigma = spocs_sigma[str(source_id)]
+gaia_spectrum.GaiaSpectrum(
+    source_id,
+    flux,
+    sigma,
+    model_to_use=custom_model.recent_model_version)
+import pdb;pdb.set_trace()
+
+
+
 spocs_data = []
 print('computing metrics for SPOCS sample from Brewer et al. (2018)')
 for source_id in spocs_labels.source_id:

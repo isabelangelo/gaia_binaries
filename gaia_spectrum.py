@@ -1,6 +1,9 @@
 """
 TO DO: I feel like this should be called gaia_cannon.RVSSpectrum()
 also I need to add documentation
+
+TO DO: maybe add an attribute called print_stats() or something to show
+the best-fit parameters, etc. Or I can make a table and print it.
 """
 
 import custom_model
@@ -89,7 +92,7 @@ class GaiaSpectrum(object):
             np.abs(self.binary_fit - self.flux))/self.sigma_ca_mask)
         f_imp_denominator = np.sum(np.abs(self.single_fit - self.binary_fit)/self.sigma_ca_mask)
         self.f_imp = f_imp_numerator/f_imp_denominator
-        # store recovered mass ratio
+        # # store recovered mass ratio
         m1_cannon = custom_model.teff2mass(self.primary_fit_labels[0])
         m2_cannon = custom_model.teff2mass(self.secondary_fit_labels[0])
         self.q_cannon = m2_cannon/m1_cannon
@@ -166,9 +169,11 @@ class GaiaSpectrum(object):
         plt.text(847,0.1,'model secondary, Teff={}K, training density={}'.format(
             int(self.binary_fit_labels[6]),
             "{:0.2e}".format(self.secondary_fit_training_density)), color=secondary_color)
-        plt.text(847,1.1,'model binary: $\Delta$RV={} km/s, m$_2$/m$_1$={}, '.format(
-            np.round(binary_fit_drv, decimals=2), 
-            np.round(self.q_cannon, decimals=2)), color=binary_fit_color)
+        # plt.text(847,1.1,'model binary: $\Delta$RV={} km/s, m$_2$/m$_1$={}, '.format(
+        #     np.round(binary_fit_drv, decimals=2), 
+        #     np.round(self.q_cannon, decimals=2)), color=binary_fit_color)
+        plt.text(847,1.1,'model binary: $\Delta$RV={} km/s'.format(
+            np.round(binary_fit_drv, decimals=2)), color=binary_fit_color)
         plt.ylabel('normalized\nflux')
         plt.xlabel('wavelength (nm)')
         plt.tick_params(axis='x', direction='inout', length=15)
@@ -181,6 +186,7 @@ class SemiEmpiricalBinarySpectrum(object):
 
         # select random primary star   
         self.row1 = single_labels.sample().iloc[0]
+        self.model_to_use = model_to_use
 
         # select secondary with similar feh, alpha
         single_labels_similar_met = single_labels.query(
@@ -212,23 +218,23 @@ class SemiEmpiricalBinarySpectrum(object):
         self.rv2 = np.random.uniform(-26,26)
         
         # compute relative fluxes
-        flux1_weight, flux2_weight = custom_model.flux_weights(
+        self.flux1_weight, self.flux2_weight = custom_model.flux_weights(
             self.row1.teff_gspphot, 
             self.row2.teff_gspphot)
         flux1, sigma1 = single_flux[str(self.row1.source_id)], single_sigma[str(self.row1.source_id)]
         flux2, sigma2 = single_flux[str(self.row2.source_id)], single_sigma[str(self.row2.source_id)]
        
         # shift flux2 according to drv
-        delta_w1 = custom_model.w * self.rv1/custom_model.speed_of_light_kms
-        delta_w2 = custom_model.w * self.rv2/custom_model.speed_of_light_kms
-        flux1_shifted = np.interp(custom_model.w, custom_model.w + delta_w1, flux1)
-        flux2_shifted = np.interp(custom_model.w, custom_model.w + delta_w2, flux2)
+        self.delta_w1 = custom_model.w * self.rv1/custom_model.speed_of_light_kms
+        self.delta_w2 = custom_model.w * self.rv2/custom_model.speed_of_light_kms
+        flux1_shifted = np.interp(custom_model.w, custom_model.w + self.delta_w1, flux1)
+        flux2_shifted = np.interp(custom_model.w, custom_model.w + self.delta_w2, flux2)
         
         # compute flux + errors
-        self.primary_flux = flux1_weight*flux1_shifted
-        self.secondary_flux = flux2_weight*flux2_shifted
+        self.primary_flux = self.flux1_weight*flux1_shifted
+        self.secondary_flux = self.flux2_weight*flux2_shifted
         self.flux = self.primary_flux + self.secondary_flux
-        self.sigma = flux1_weight*sigma1 + flux2_weight*sigma2
+        self.sigma = self.flux1_weight*sigma1 + self.flux2_weight*sigma2
         
         # masked sigma for  metric calculations
         self.sigma_ca_mask = self.sigma.copy()
@@ -279,10 +285,10 @@ class SemiEmpiricalBinarySpectrum(object):
         m2_true = custom_model.teff2mass(self.row2.teff_gspphot)
         self.q_true = m2_true/m1_true
 
-        # store recovered parameters
-        m1_cannon = custom_model.teff2mass(self.primary_fit_labels[0])
-        m2_cannon = custom_model.teff2mass(self.secondary_fit_labels[0])
-        self.q_cannon = m2_cannon/m1_cannon
+        # # store recovered parameters
+        # m1_cannon = custom_model.teff2mass(self.primary_fit_labels[0])
+        # m2_cannon = custom_model.teff2mass(self.secondary_fit_labels[0])
+        # self.q_cannon = m2_cannon/m1_cannon
 
         # compute training density of primary, secondary
         self.primary_fit_training_density = custom_model.training_density(
@@ -308,9 +314,23 @@ class SemiEmpiricalBinarySpectrum(object):
                         [true_vbroad1] + [self.rv1]
         true_param2 = self.row2[['teff_gspphot', 'logg_gspphot']].tolist() + \
                         [true_vbroad2] + [self.rv2]
+        true_param2_full = self.row2[['teff_gspphot', 'logg_gspphot']].tolist() + \
+                            self.row1[['mh_gspphot']].tolist() + [true_alpha] + \
+                            [true_vbroad2] + [self.rv2]
 
-        self.true_binary_model = custom_model.binary_model(true_param1, true_param2)
+        # compute true binary model chisq
+        # I need to use the pre-determined flux ratio to get the exact model
+        true_primary_model = self.model_to_use(true_param1[:-1])
+        true_secondary_model = self.model_to_use(true_param2_full[:-1])
+
+        true_primary_shifted = np.interp(custom_model.w, custom_model.w + self.delta_w1, true_primary_model)
+        true_secondary_shifted = np.interp(custom_model.w, custom_model.w + self.delta_w2, true_secondary_model)
+
+        self.true_binary_model = self.flux1_weight*true_primary_shifted + self.flux2_weight*true_secondary_shifted
         weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_model_version.s2)
         resid = weights * (self.true_binary_model - self.flux)
         self.true_binary_model_chisq = np.sum(resid**2)
+
+
+
 

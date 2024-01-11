@@ -3,7 +3,6 @@ loads labels + RVS spectra for the Cannon training and test sets.
 NOTE: before running this code, you need to 
 delete galah_stars_gaia table from the gaia archive online
 """
-
 from astropy.table import Table
 import numpy as np
 import pandas as pd
@@ -33,6 +32,7 @@ print(len(galah_allstar_catalog_cleaned), 'remaining after cleaning based on GAL
 
 # reformat Gaia designation column
 galah_gaia_xmatch['designation'] = [i.decode().replace('EDR3', 'DR3') for i in galah_gaia_xmatch['designation']]
+
 
 ########### crossmatch GALAH/gaia and filter sample ##################################
 # find GALAH stars in Gaia xmatch table

@@ -46,11 +46,6 @@ ca_idx1 = np.where((w>849.5) & (w<850.5))[0]
 ca_idx2 = np.where((w>854) & (w<855))[0]
 ca_idx3 = np.where((w>866) & (w<867))[0]
 
-# # broad mask
-# ca_idx1 = np.where((w>849) & (w<851))[0]
-# ca_idx2 = np.where((w>853.5) & (w<855.5))[0]
-# ca_idx3 = np.where((w>865.5) & (w<867.5))[0]
-
 # compute full mask from components
 ca_mask = np.array(list(ca_idx1) + list(ca_idx2) + list(ca_idx3))
 
@@ -82,7 +77,11 @@ def flux_weights(teff1, teff2):
     # compute relative I band flux > flux ratio
     I1 = teff2Vmag(teff1) - teff2VminusI(teff1)
     I2 = teff2Vmag(teff2) - teff2VminusI(teff2)
+
+    # sample flux ratio from Gaussian to account for uncertainty
     f1_over_f2 = 10**((I2-I1)/2.5)
+
+    # compute relative flux weights
     flux2_weight = 1/(1+f1_over_f2)
     flux1_weight = 1-flux2_weight
     return(flux1_weight, flux2_weight)

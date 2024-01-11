@@ -79,7 +79,8 @@ dr3.rvs_spec_sig_to_noise, dr3.ra, dr3.dec, dr3.non_single_star, dr3.ruwe, \
 dr3.teff_gspphot, dr3.logg_gspphot, dr3.mh_gspphot, dr3.vbroad, \
 dr3.radial_velocity, dr3.radial_velocity_error, dr3.rv_nb_transits, \
 dr3.phot_g_mean_mag, dr3.bp_rp, \
-dr3.grvs_mag, dr3.grvs_mag_error \
+dr3.grvs_mag, dr3.grvs_mag_error, \
+dr3.distance_gspphot, dr3.distance_gspphot_lower, dr3.distance_gspphot_upper \
 FROM user_iangelo.elbadry_full_sample_gaia as eb2018 \
 JOIN gaiadr3.gaia_source as dr3 \
 ON dr3.source_id = eb2018.source_id \

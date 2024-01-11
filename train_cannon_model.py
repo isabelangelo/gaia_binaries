@@ -35,6 +35,7 @@ model_0 = tc.CannonModel(training_set, normalized_flux, normalized_ivar,
 
 # train initial model and write to file for reference
 model_0.train()
+import pdb;pdb.set_trace()
 print('finished training first iteration of cannon model')
 model_filename_initial = './data/cannon_models/' + model_fileroot + '_initial.model'
 model_0.write(model_filename_initial, include_training_set_spectra=True)
