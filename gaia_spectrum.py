@@ -169,9 +169,9 @@ class GaiaSpectrum(object):
         plt.text(847,0.1,'model secondary, Teff={}K, training density={}'.format(
             int(self.binary_fit_labels[6]),
             "{:0.2e}".format(self.secondary_fit_training_density)), color=secondary_color)
-        # plt.text(847,1.1,'model binary: $\Delta$RV={} km/s, m$_2$/m$_1$={}, '.format(
-        #     np.round(binary_fit_drv, decimals=2), 
-        #     np.round(self.q_cannon, decimals=2)), color=binary_fit_color)
+        plt.text(847,1.1,'model binary: $\Delta$RV={} km/s, m$_2$/m$_1$={}, '.format(
+            np.round(binary_fit_drv, decimals=2), 
+            np.round(self.q_cannon, decimals=2)), color=binary_fit_color)
         plt.text(847,1.1,'model binary: $\Delta$RV={} km/s'.format(
             np.round(binary_fit_drv, decimals=2)), color=binary_fit_color)
         plt.ylabel('normalized\nflux')

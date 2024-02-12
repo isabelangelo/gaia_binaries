@@ -123,15 +123,28 @@ print('saving flux, flux_err to .csv files')
 # write training set labels to .csv files
 gaia.write_labels_to_file(galah_stars_gaia_results, 'training')
 
-# write training set flux, sigma to .csv files
+# write training set flux, sigma to .csv and .fits files
 gaia.write_flux_data_to_csv(flux_df, sigma_df, 'training')
-gaia.write_flux_data_to_csv(flux_df, sigma_df, 'test')
-
-# write training set flux, ivar to fits files for the cannon
 gaia.write_flux_data_to_fits(flux_df, sigma_df, 'training')
 
 
+########### load high SNR sample for empriical scatter calculation ################################
+# query to filter based on Gaia parameters + download RVS spectra
+high_snr_query = f"SELECT TOP 100 dr3.source_id, dr3.rvs_spec_sig_to_noise \
+FROM gaiadr3.gaia_source as dr3 \
+WHERE dr3.has_rvs = 'True' \
+AND dr3.logg_gspphot > 4 \
+AND dr3.teff_gspphot > 4000 \
+AND dr3.teff_gspphot < 7000 \
+AND dr3.ruwe < 1.4 \
+AND dr3.non_single_star = 0 \
+ORDER BY dr3.rvs_spec_sig_to_noise DESC"
 
+# query gaia and download RVS spectra, save to dataframes
+_, high_snr_flux_df, high_snr_sigma_df = gaia.retrieve_data_and_labels(high_snr_query)
+
+# write training set flux, sigma to .csv files
+gaia.write_flux_data_to_csv(high_snr_flux_df, high_snr_sigma_df, 'high_snr')
 
 
 
