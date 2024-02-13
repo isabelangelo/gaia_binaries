@@ -1,6 +1,8 @@
 """
 TO DO: I feel like this should be called gaia_cannon.RVSSpectrum()
-also I need to add documentation
+or something like that
+
+TO DO: add documentation
 
 TO DO: maybe add an attribute called print_stats() or something to show
 the best-fit parameters, etc. Or I can make a table and print it.
@@ -59,7 +61,11 @@ class GaiaSpectrum(object):
             self.sigma,
             single_star_model = model_to_use)
         self.single_fit = model_to_use(self.single_fit_labels)
-        
+
+    def compute_best_fit_binary(self):
+        """
+        computes best-fit binary model 
+        """
         # best-fit binary
         self.binary_fit_labels, self.binary_fit_chisq = custom_model.fit_binary(
             self.flux, 
@@ -85,6 +91,9 @@ class GaiaSpectrum(object):
         
     # store relevant information for binary detection
     def compute_binary_detection_stats(self):
+        """
+        computes binary detection statistics 
+        """
         # best-fit binary chisq
         self.delta_chisq = self.single_fit_chisq - self.binary_fit_chisq
         # compute improvement fraction
@@ -113,6 +122,7 @@ class GaiaSpectrum(object):
 
     # plot of data + model fits     
     def plot(self):
+        self.compute_best_fit_binary()
         self.compute_binary_detection_stats()
         self.compute_oddball_metrics()
         # compute values needed for plot
