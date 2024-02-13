@@ -1,3 +1,6 @@
+# TO DO : remove functions that I don't use in the analysis.
+
+
 """
 defines functions to generate the following cannon model diagnostic plots:
 	plot_training_set() - histogram of training set labels
@@ -8,12 +11,91 @@ defines functions to generate the following cannon model diagnostic plots:
 from astropy.io import fits
 from astropy.table import Table
 import custom_model
+import gaia_spectrum
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
 import pandas as pd
 import thecannon as tc
 import os
+
+################# essential functions for training steps ###################################################
+
+# high SNR spectra for empirical s2 calculation 
+high_snr_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/high_snr_flux.csv')
+high_snr_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/high_snr_sigma.csv')
+
+def update_s2_emp(model):
+    """
+    function to compute empirical model scatter and update model.s2_emp parameter
+    
+    Args:
+        model (tc.model.CannonModel) : Cannon model object to compute s2 for
+    Returns:
+        model (tc.model.CannonModel) : updated Cannon model object with s2_emp attribute
+    """
+    # compute |data - model| for high SNR targets
+    s2_emp_arr = []
+    for source_id in high_snr_flux_df.columns.to_numpy()[1:]:
+        # load flux, sigma of target
+        flux = high_snr_flux_df[source_id]
+        sigma = high_snr_sigma_df[source_id]
+        # mask calcium features for fit
+        spec = gaia_spectrum.GaiaSpectrum(int(source_id), flux, sigma)
+        # store per pixel |data-model|
+        s2_emp_arr.append(abs(flux - spec.single_fit))
+    # compute per pixel empirical s2, save as model attribute
+    s2_emp_arr = np.array(s2_emp_arr).T
+    model.s2_emp = np.mean(s2_emp_arr, axis=1)**2
+    return model
+
+def clean(model_iter_n):
+    """
+    function to clean (i.e. remove binaries) from training set and re-train
+    binaries are identified as objects with delta_chisq>100, 
+    used for iterative cleaning
+    
+    Args:
+        model_iter_n (tc.model.CannonModel) : Cannon model object to clean
+    Returns:
+        model_iter_n_plus_1 (tc.model.CannonModel) : cleaned cannon model object
+    """
+    n_training_set_spectra = len(model_iter_n.training_set_labels)
+    training_set_delta_chisq = np.zeros(n_training_set_spectra)
+    
+    # compute delta chisq for all objects in training set
+    for spec_idx in range(n_training_set_spectra):
+        spec_flux = model_iter_n.training_set_flux[spec_idx]
+        spec_sigma = 1/np.sqrt(model_iter_n.training_set_ivar[spec_idx])
+        spec_labels = model_iter_n.training_set_labels[spec_idx]
+        spec = gaia_spectrum.GaiaSpectrum(
+            None, 
+            spec_flux, 
+            spec_sigma, 
+            model_to_use=model_iter_n)
+        spec.compute_binary_detection_stats()
+        training_set_delta_chisq[spec_idx] = spec.delta_chisq
+        
+    # make new training set with only objects labels as single stars   
+    idx_to_keep = (training_set_delta_chisq < 100)
+    training_set_iter_n_plus_1 = model_iter_n.training_set_labels[idx_to_keep]
+    normalized_flux_iter_n_plus_1 = model_iter_n.training_set_flux[idx_to_keep]
+    normalized_ivar_iter_n_plus_1 = model_iter_n.training_set_ivar[idx_to_keep]
+    
+    # re-train model
+    model_iter_n_plus_1 = tc.CannonModel(
+        training_set_iter_n_plus_1, 
+        normalized_flux_iter_n_plus_1, 
+        normalized_ivar_iter_n_plus_1,
+        vectorizer=vectorizer, 
+        regularization=None)
+    model_iter_n_plus_1.train()
+    # udpate empirical scatter for newest iteration
+    update_s2_emp(model_iter_n_plus_1)
+
+    return model_iter_n_plus_1
+
+# ===================== functions to create diagnostics plots ========================
 
 plt.rcParams['font.size']=12
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
@@ -200,6 +282,8 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 			    vectorizer=vectorizer, 
 			    regularization=None)
 			model_leave1out.train()
+			# udpate empirical scatter 
+    		update_s2_emp(model_leave1out)
 
 			# fit cross validation model to data
 			cannon_labels, cannon_chisq = custom_model.fit_single_star(flux, sigma, single_star_model=model_leave1out)
@@ -251,47 +335,6 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 		plot_label_difference(cannon_label_df, labels_to_plot[i][6:])
 	plt.savefig(figure_path, dpi=300, bbox_inches='tight')
 
-# generate diagnostic plots for single star model
-# save diagnostic plots
-model_figure_path = './data/cannon_models/'+custom_model.recent_model_fileroot+'_figures/'
-os.mkdir(model_figure_path)
 
-# load data for plots
-training_label_df_cleaned = pd.read_csv('./data/label_dataframes/training_labels_cleaned.csv')
-training_flux_df_cleaned = pd.read_csv('./data/gaia_rvs_dataframes/training_flux_cleaned.csv')
-training_sigma_df_cleaned = pd.read_csv('./data/gaia_rvs_dataframes/training_sigma_cleaned.csv')
-
-# # training set parameter space corner plot for 3 test spectra
-# example_top_filename = model_figure_path + 'example_spec_top_panel.png'
-# plot_example_spec_top_panel(
-# 	training_label_df_cleaned, 
-# 	example_top_filename)
-# print('top panel of example spectrum plot saved to {}'.format(example_top_filename))
-
-# # cannon model fits for 3 test spectra
-# example_bottom_filename = model_figure_path +  'example_spec_bottom_panel.png'
-# plot_example_spec_bottom_panel(
-# 	training_label_df_cleaned,
-# 	training_flux_df_cleaned,
-# 	training_sigma_df_cleaned,
-# 	example_bottom_filename)
-# print('bottom panel of example spectrum plot saved to {}'.format(example_bottom_filename))
-
-# # diagnostic plots from the cannon code
-# theta_figure = tc.plot.theta(custom_model.recent_model_version)
-# theta_figure.savefig(model_figure_path + 'theta.png', dpi=300)
-# print('theta plot saved to {}'.format(model_figure_path + 'theta.png'))
-
-# scatter_figure = tc.plot.scatter(custom_model.recent_model_version)
-# scatter_figure.savefig(model_figure_path + 'scatter.png', dpi=300)
-# print('pixel scatter plot saved to {}'.format(model_figure_path + 'scatter.png'))
-
-plot_one_to_one(
-	training_label_df_cleaned,
-	training_flux_df_cleaned,
-	training_sigma_df_cleaned,
-	model_figure_path + 'one_to_one_s2_3e-3.png',
-	path_to_save_labels = custom_model.recent_model_fileroot+'_training_labels')
-print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 
 
