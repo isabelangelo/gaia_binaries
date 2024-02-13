@@ -337,7 +337,7 @@ class SemiEmpiricalBinarySpectrum(object):
         true_secondary_shifted = np.interp(custom_model.w, custom_model.w + self.delta_w2, true_secondary_model)
 
         self.true_binary_model = self.flux1_weight*true_primary_shifted + self.flux2_weight*true_secondary_shifted
-        weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_model_version.s2)
+        weights = 1/np.sqrt(self.sigma_ca_mask**2+custom_model.recent_model_version.s2_emp)
         resid = weights * (self.true_binary_model - self.flux)
         self.true_binary_model_chisq = np.sum(resid**2)
 

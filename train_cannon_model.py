@@ -105,7 +105,7 @@ plot_one_to_one(
     training_label_df_cleaned,
     training_flux_df_cleaned,
     training_sigma_df_cleaned,
-    model_figure_path + 'one_to_one_s2_3e-3.png',
+    model_figure_path + 'one_to_one.png',
     path_to_save_labels = custom_model.recent_model_fileroot+'_training_labels')
 print('one to one plot saved to {}'.format(model_figure_path + 'one_to_one.png'))
 

@@ -19,11 +19,6 @@ w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20
 recent_model_fileroot = 'gaia_rvs_model_cleaned'
 recent_model_version = tc.CannonModel.read('./data/cannon_models/'+recent_model_fileroot+'.model')
 
-# TEMPORARY set empirical s2 for chisq calculation
-# NOTE: when I delete this, I also need to change the weights term in the 
-# single star + binary residuals function
-recent_model_version.s2_emp = fits.open('./empirical_model_s2.fits')[0].data
-
 training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
 training_set_table = Table.read('./data/label_dataframes/training_labels.csv', format='csv')
 training_set = training_set_table[training_labels]
