@@ -14,12 +14,16 @@ import pandas as pd
 # should be descriptive of current model to be trained
 model_fileroot = 'gaia_rvs_model'
 
-def update_empirical_s2(model):
+# high SNR spectra for empirical s2 calculation 
+high_snr_flux_df = pd.read_csv('./data/gaia_rvs_dataframes/high_snr_flux.csv')
+high_snr_sigma_df = pd.read_csv('./data/gaia_rvs_dataframes/high_snr_sigma.csv')
+
+def update_s2_emp(model):
     """
     function to compute empirical model scatter and update model.s2_emp parameter
     
     Args:
-        model (tc.model.CannonModel) : Cannon model object to compute s2
+        model (tc.model.CannonModel) : Cannon model object to compute s2 for
     Returns:
         model (tc.model.CannonModel) : updated Cannon model object with s2_emp attribute
     """
@@ -36,6 +40,7 @@ def update_empirical_s2(model):
     # compute per pixel empirical s2, save as model attribute
     s2_emp_arr = np.array(s2_emp_arr).T
     model.s2_emp = np.mean(s2_emp_arr, axis=1)**2
+    return model
 
 def clean(model_iter_n):
     """
@@ -78,6 +83,9 @@ def clean(model_iter_n):
         vectorizer=vectorizer, 
         regularization=None)
     model_iter_n_plus_1.train()
+
+    # udpate empirical scatter for newest iteration
+    update_s2_emp(model_iter_n_plus_1)
     return model_iter_n_plus_1
 
 ################# train Cannon model ###################################################
@@ -102,13 +110,14 @@ model_0 = tc.CannonModel(training_set, normalized_flux, normalized_ivar,
 
 # train initial model and write to file for reference
 model_0.train()
+update_s2_emp(model_0)
 print('finished training first iteration of cannon model')
 model_filename_initial = './data/cannon_models/' + model_fileroot + '_initial.model'
 model_0.write(model_filename_initial, include_training_set_spectra=True)
 
 # clean until the model finds zero binaries in its training set
-model_n = model_0
-model_n_plus_1 = clean(model_0)
+model_n = model_0 
+model_n_plus_1 = clean(model_0) 
 n_iter = 1
 n_binaries = model_n.training_set_labels.shape[0] - model_n_plus_1.training_set_labels.shape[0]
 print('iteration {}: {} binaries found, training set size = {}'.format(
@@ -165,14 +174,3 @@ training_labels_cleaned.to_csv('./data/label_dataframes/training_labels_cleaned.
 training_flux_df_cleaned.to_csv('./data/gaia_rvs_dataframes/training_flux_cleaned.csv')
 training_sigma_df_cleaned.to_csv('./data/gaia_rvs_dataframes/training_sigma_cleaned.csv')
 
-
-# okay so I added an update_s2
-# but now I need to make sure the s2 gets updated before being written to a file.
-# and before it's used for iterative cleaning.
-# should I include it as a step in the iterative cleaning? maybe the first step?
-# let me take a second to think about this
-# maybe I need to work on this tomorrow?
-
-# and then I need to make sure the cleaning process is using the s2_emp.
-# then I can print the stuff and go home
-# and maybe grade exams tomorrow.
