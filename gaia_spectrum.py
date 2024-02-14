@@ -50,6 +50,7 @@ class GaiaSpectrum(object):
         self.flux = flux
         self.sigma = sigma
         self.rvs_snr = np.mean(self.flux/self.sigma)
+        self.model_to_use = model_to_use
 
         # masked sigma for  metric calculations
         self.sigma_ca_mask = sigma.copy()
@@ -59,8 +60,8 @@ class GaiaSpectrum(object):
         self.single_fit_labels, self.single_fit_chisq = custom_model.fit_single_star(
             self.flux, 
             self.sigma,
-            single_star_model = model_to_use)
-        self.single_fit = model_to_use(self.single_fit_labels)
+            single_star_model = self.model_to_use)
+        self.single_fit = self.model_to_use(self.single_fit_labels)
 
     def compute_best_fit_binary(self):
         """
@@ -70,7 +71,7 @@ class GaiaSpectrum(object):
         self.binary_fit_labels, self.binary_fit_chisq = custom_model.fit_binary(
             self.flux, 
             self.sigma,
-            single_star_model = model_to_use)
+            single_star_model = self.model_to_use)
 
         # store separate primary, secondary labels (including rv)
         self.primary_fit_labels = self.binary_fit_labels[:6]
@@ -87,7 +88,7 @@ class GaiaSpectrum(object):
             self.primary_fit_labels, 
             self.secondary_fit_labels[np.array([0,1,4,5])],
             return_components=True,
-            single_star_model = model_to_use)
+            single_star_model = self.model_to_use)
         
     # store relevant information for binary detection
     def compute_binary_detection_stats(self):

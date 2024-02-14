@@ -60,6 +60,12 @@ def clean(model_iter_n):
     Returns:
         model_iter_n_plus_1 (tc.model.CannonModel) : cleaned cannon model object
     """
+
+    # initialize cannon model vectorizer
+    training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
+    vectorizer = tc.vectorizer.PolynomialVectorizer(training_labels, 2)
+
+    # constants and arrays for delta_chisq calculations
     n_training_set_spectra = len(model_iter_n.training_set_labels)
     training_set_delta_chisq = np.zeros(n_training_set_spectra)
     
@@ -73,6 +79,7 @@ def clean(model_iter_n):
             spec_flux, 
             spec_sigma, 
             model_to_use=model_iter_n)
+        spec.compute_best_fit_binary()
         spec.compute_binary_detection_stats()
         training_set_delta_chisq[spec_idx] = spec.delta_chisq
         
@@ -239,12 +246,13 @@ def plot_example_spec_bottom_panel(training_label_df, flux_df, sigma_df, figure_
 	plt.savefig(figure_path, dpi=300, bbox_inches='tight')
 
 
-def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_labels=None):
+def plot_one_to_one(model_to_validate, label_df, flux_df, sigma_df, figure_path, path_to_save_labels=None):
 	"""
 	Plot a one-to-one comparison of the training set labels from GALAH and the Cannon
     labels inferred from the training set spectra.
 
     Args:
+    	model_to_validate (tc.CannonModel) : model to use for leave-one-out validation
     	label_df (pd.Dataframe) : training labels of sample to plot (n_objects x n_labels)
     	flux_df (pd.Dataframe) : flux of sample to plot (n_pixels x n_objects)
     	sigma_df (pd.Dataframe) : sigma of sample to plot (n_pixels x n_objects)
@@ -254,7 +262,6 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 	"""
 	pc = 'k';markersize=1;alpha_value=0.5
 	labels_to_plot = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']
-	model_to_validate = custom_model.recent_model_version
 
 	def compute_cannon_labels(label_df, flux_df, sigma_df):
 		galah_keys = labels_to_plot
