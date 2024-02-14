@@ -88,9 +88,10 @@ training_sigma_df_cleaned = training_sigma_df[[str(i) for i in training_labels_c
 training_labels_cleaned.to_csv('./data/label_dataframes/training_labels_cleaned.csv')
 training_flux_df_cleaned.to_csv('./data/gaia_rvs_dataframes/training_flux_cleaned.csv')
 training_sigma_df_cleaned.to_csv('./data/gaia_rvs_dataframes/training_sigma_cleaned.csv')
+print('saved cleaned model training set + labels to dataframes')
 
 ################# generate + save diagnostic plots ###################################################
-
+print('generating one-to-one diagnostic plot with leave-20percent-out cross-validation')
 # define path to save plots to
 model_figure_path = './data/cannon_models/'+custom_model.recent_model_fileroot+'_figures/'
 os.mkdir(model_figure_path)

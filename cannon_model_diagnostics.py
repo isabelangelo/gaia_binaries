@@ -46,7 +46,7 @@ def update_s2_emp(model):
         s2_emp_arr.append(abs(flux - spec.single_fit))
     # compute per pixel empirical s2, save as model attribute
     s2_emp_arr = np.array(s2_emp_arr).T
-    model.s2_emp = np.mean(s2_emp_arr, axis=1)**2
+    model._s2 = np.mean(s2_emp_arr, axis=1)**2
     return model
 
 def clean(model_iter_n):
@@ -283,7 +283,7 @@ def plot_one_to_one(label_df, flux_df, sigma_df, figure_path, path_to_save_label
 			    regularization=None)
 			model_leave1out.train()
 			# udpate empirical scatter 
-    		update_s2_emp(model_leave1out)
+			update_s2_emp(model_leave1out)
 
 			# fit cross validation model to data
 			cannon_labels, cannon_chisq = custom_model.fit_single_star(flux, sigma, single_star_model=model_leave1out)

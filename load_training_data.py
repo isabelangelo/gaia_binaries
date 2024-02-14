@@ -82,7 +82,7 @@ emax_logg = emax('e_logg')
 emax_feh = emax('e_fe_h')
 emax_alpha = emax('e_alpha_fe')
 emax_vbroad = emax('e_vbroad')
-import pdb;pdb.set_trace()
+
 galah_stars_gaia = galah_stars_gaia.query('galah_logg > 4 & galah_eteff<@emax_teff & galah_elogg<@emax_logg \
             & galah_efeh<@emax_feh & galah_ealpha<@emax_alpha\
             & galah_evbroad<@emax_vbroad')

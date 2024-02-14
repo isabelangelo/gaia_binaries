@@ -16,7 +16,7 @@ from astropy.table import Table
 # =====================================================================================
 # load cannon models to use + wavelength
 w = fits.open('./data/cannon_training_data/gaia_rvs_wavelength.fits')[0].data[20:-20]
-recent_model_fileroot = 'gaia_rvs_model_cleaned'
+recent_model_fileroot = 'gaia_rvs_model_TEMP' # 'gaia_rvs_model_cleaned'
 recent_model_version = tc.CannonModel.read('./data/cannon_models/'+recent_model_fileroot+'.model')
 
 training_labels = ['galah_teff', 'galah_logg','galah_feh', 'galah_alpha', 'galah_vbroad']

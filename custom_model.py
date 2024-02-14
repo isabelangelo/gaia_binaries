@@ -78,7 +78,7 @@ def fit_single_star(flux, sigma, single_star_model=recent_model_version):
 		cannon_param[-1] = 10**cannon_param[-1]
 		# compute chisq
 		model = single_star_model(cannon_param)
-		weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2_emp)
+		weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
 		resid = weights * (model - flux)
 
 		# inflate chisq if labels are in low density label space
@@ -146,7 +146,7 @@ def fit_binary(flux, sigma, single_star_model=recent_model_version):
 		else:
 			# compute chisq
 			model = binary_model(cannon_param1, cannon_param2, single_star_model=single_star_model)
-			weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2_emp)
+			weights = 1/np.sqrt(sigma_for_fit**2+single_star_model.s2)
 			resid = weights * (flux - model)
 
 			# inflate chisq if labels are in low density label space
