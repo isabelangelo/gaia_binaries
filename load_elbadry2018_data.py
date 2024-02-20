@@ -1,5 +1,5 @@
 # to do : add radial velocity error, q_dyn filters?
-# I am not including them fornow because I want to track them.
+# I am not including them for now because I want to track them.
 # also, I need to edit/remove the code that takes a sub-sample of the data.
 """
 loads RVS spectra + labels for single stars + binaries from El-Badry et al 2018b

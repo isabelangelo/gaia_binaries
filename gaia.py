@@ -24,6 +24,17 @@ def upload_table(df, name):
 # much longer function to query gaia and 
 # save labels, flux + sigma
 def retrieve_data_and_labels(query):
+	"""
+	runs gaia query for stellar parameters and RVS spectra, synthesizes query output
+	Args:
+		query (str): Gaia query to run
+	Returns:
+		results (pd.DataFrame): results table output of Gaia query
+		flux_df (pd.DataFrame): dataframe of RVS flux for stars in query 
+								(columns are source_IDs, data are per-pixel flux values)
+		sigma_df (pd.DataFrame): dataframe of RVS sigma for stars in query 
+								(columns are source_IDs, data are per-pixel flux values)
+	"""
 	job = Gaia.launch_job_async(query)
 	results = job.get_results().to_pandas()
 	print(f'Table size (rows): {len(results)} after filters based on Gaia DR3 labels')

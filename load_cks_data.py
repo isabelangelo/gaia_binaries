@@ -106,7 +106,6 @@ def save_cks_cannon_labels(label_df, flux_df, sigma_df, path_to_save_labels=None
 	        ivar = 1/sigma**2
 
 	        # fit cannon model with custom optimizer
-	        print('fitting custom model to Gaia DR3 {}'.format(source_id))
 	        cannon_labels = custom_model.fit_single_star(flux, sigma)[0].tolist()
 
 	        # convert to dictionary
