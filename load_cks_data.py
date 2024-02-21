@@ -56,8 +56,7 @@ JOIN gaiadr3.gaia_source as dr3 \
     ON dr3.source_id = cks.source_id \
 JOIN gaiadr3.astrophysical_parameters as ap \
     ON ap.source_id = dr3.source_id \
-WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 50"
+WHERE dr3.has_rvs = 'True'"
 
 # edit column datatypes
 # (this is needed for the Gaia query to work)
@@ -68,7 +67,7 @@ gaia.upload_table(cks_stars_gaia, 'cks_stars_gaia')
 
 # download data
 cks_stars_gaia_results, cks_flux_df, cks_sigma_df = gaia.retrieve_data_and_labels(query)
-print(len(cks_stars_gaia_results), 'CKS stars with RVS spectra in DR3 + SNR>50')
+print(len(cks_stars_gaia_results), 'CKS stars with RVS spectra in DR3')
 
 # save data to .csv files
 gaia.write_labels_to_file(cks_stars_gaia_results, 'cks')

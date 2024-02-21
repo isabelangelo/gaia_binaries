@@ -1,6 +1,3 @@
-# TO DO : maybe I should combine this with load_spocs_data.py
-# TO DO : change compute_binary_detection_stats to compute_binary_metrics?
-# TO DO : I need to add the relevant Gaia parameters, which requires editing the Gaia query
 """
 This code computes relevant binary detection metrics
 for the SPOCS sample from Brewer et al 2018
@@ -20,6 +17,10 @@ spocs_sigma = pd.read_csv('./data/gaia_rvs_dataframes/spocs_sigma.csv')
 cks_labels = pd.read_csv('./data/label_dataframes/cks_labels.csv')
 cks_flux = pd.read_csv('./data/gaia_rvs_dataframes/cks_flux.csv')
 cks_sigma = pd.read_csv('./data/gaia_rvs_dataframes/cks_sigma.csv')
+
+# require SNR>50 for label comparison
+spocs_labels = spocs_labels.query('rvs_spec_sig_to_noise > 50')
+cks_labels = cks_labels.query('rvs_spec_sig_to_noise > 50')
 
 # compute metrics
 spocs_keys = [
@@ -51,6 +52,7 @@ for source_id in spocs_labels.source_id:
         flux, 
         sigma, 
         model_to_use = custom_model.recent_model_version)
+    spec.compute_best_fit_binary()
     spec.compute_binary_detection_stats()
     spec.compute_oddball_metrics()
     row = spocs_labels[spocs_labels.source_id==source_id].iloc[0]
@@ -74,7 +76,7 @@ for source_id in spocs_labels.source_id:
     spocs_data.append(dict(zip(spocs_keys, spocs_values)))
 spocs_df = pd.DataFrame(spocs_data)
 # save data to file
-spocs_df_filename = './data/binary_metric_dataframes/spocs_metrics.csv'
+spocs_df_filename = './data/oddball_and_binary_metric_dataframes/spocs_metrics.csv'
 spocs_df.to_csv(spocs_df_filename)
 print('binary detection stats for SPOCS sample saved to {}'.format(
 	spocs_df_filename))
@@ -93,6 +95,7 @@ for source_id in cks_labels.source_id:
         flux, 
         sigma, 
         model_to_use = custom_model.recent_model_version)
+    spec.compute_best_fit_binary()
     spec.compute_binary_detection_stats()
     spec.compute_oddball_metrics()
     row = cks_labels[cks_labels.source_id==source_id].iloc[0]
@@ -116,7 +119,7 @@ for source_id in cks_labels.source_id:
     cks_data.append(dict(zip(cks_keys, cks_values)))
 cks_df = pd.DataFrame(cks_data)
 # save data to file
-cks_df_filename = './data/binary_metric_dataframes/cks_metrics.csv'
+cks_df_filename = './data/oddball_and_binary_metric_dataframes/cks_metrics.csv'
 cks_df.to_csv(cks_df_filename)
 print('binary detection stats for CKS sample saved to {}'.format(
     cks_df_filename))

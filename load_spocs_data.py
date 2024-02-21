@@ -69,15 +69,14 @@ JOIN gaiadr3.gaia_source as dr3    \
     ON dr3.source_id = spocs.source_id \
 JOIN gaiadr3.astrophysical_parameters as ap \
     ON ap.source_id = dr3.source_id \
-WHERE dr3.has_rvs = 'True' \
-AND dr3.rvs_spec_sig_to_noise > 50"
+WHERE dr3.has_rvs = 'True'"
 
 # upload CKS star IDs to Gaia
 gaia.upload_table(spocs_stars_gaia, 'spocs_stars_gaia')
 
 # download data
 spocs_stars_gaia_results, spocs_flux_df, spocs_sigma_df = gaia.retrieve_data_and_labels(query)
-print(len(spocs_stars_gaia_results), 'SPOCS stars with RVS spectra in DR3 + SNR>50')
+print(len(spocs_stars_gaia_results), 'SPOCS stars with RVS spectra in DR3')
 
 # save data to .csv files
 gaia.write_labels_to_file(spocs_stars_gaia_results, 'spocs')

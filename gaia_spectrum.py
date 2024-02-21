@@ -296,10 +296,10 @@ class SemiEmpiricalBinarySpectrum(object):
         m2_true = custom_model.teff2mass(self.row2.teff_gspphot)
         self.q_true = m2_true/m1_true
 
-        # # store recovered parameters
-        # m1_cannon = custom_model.teff2mass(self.primary_fit_labels[0])
-        # m2_cannon = custom_model.teff2mass(self.secondary_fit_labels[0])
-        # self.q_cannon = m2_cannon/m1_cannon
+        # store recovered parameters
+        m1_cannon = custom_model.teff2mass(self.primary_fit_labels[0])
+        m2_cannon = custom_model.teff2mass(self.secondary_fit_labels[0])
+        self.q_cannon = m2_cannon/m1_cannon
 
         # compute training density of primary, secondary
         self.primary_fit_training_density = custom_model.training_density(

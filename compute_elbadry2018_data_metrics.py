@@ -47,6 +47,7 @@ for source_id in gaia_spectrum.single_labels.source_id:
         flux, 
         sigma, 
         model_to_use = custom_model.recent_model_version)
+    spec.compute_best_fit_binary()
     spec.compute_binary_detection_stats()
     spec.compute_oddball_metrics()
     row = gaia_spectrum.single_labels[
@@ -71,7 +72,7 @@ for source_id in gaia_spectrum.single_labels.source_id:
     single_data.append(dict(zip(single_keys, single_values)))
 single_df = pd.DataFrame(single_data)
 # save data to file
-single_df_filename = './data/binary_metric_dataframes/single_metrics.csv'
+single_df_filename = './data/oddball_and_binary_metric_dataframes/elbadry2018_single_metrics.csv'
 single_df.to_csv(single_df_filename)
 print('binary detection stats for single stars from El-Badry 2018 saved to {}'.format(
 	single_df_filename))
@@ -121,6 +122,7 @@ for source_id in binary_labels.source_id:
         flux, 
         sigma, 
         model_to_use = custom_model.recent_model_version)
+    spec.compute_best_fit_binary()
     spec.compute_binary_detection_stats()
     spec.compute_oddball_metrics()
     row = binary_labels[binary_labels.source_id==source_id].iloc[0]
@@ -159,7 +161,7 @@ for source_id in binary_labels.source_id:
     binary_data.append(dict(zip(binary_keys, binary_values)))
 binary_df = pd.DataFrame(binary_data)
 # save data to file
-binary_df_filename = './data/binary_metric_dataframes/binary_metrics.csv'
+binary_df_filename = './data/oddball_and_binary_metric_dataframes/elbadry2018_tableE3_binary_metrics.csv'
 binary_df.to_csv(binary_df_filename)
 print('binary detection stats for binaries from El-Badry 2018 Table E3 saved to {}'.format(
 	binary_df_filename))
