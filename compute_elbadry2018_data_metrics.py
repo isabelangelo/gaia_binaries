@@ -71,9 +71,9 @@ for source_id in gaia_spectrum.single_labels.source_id:
     spec.single_fit_chisq,
     spec.single_fit_training_density,
     spec.single_fit_ca_resid,
-    spec.ca_triplet_equivalent_widths['8498Å'],
-    spec.ca_triplet_equivalent_widths['8542Å'],
-    spec.ca_triplet_equivalent_widths['8662Å']
+    spec.ca_triplet_equivalent_widths['849.8nm'],
+    spec.ca_triplet_equivalent_widths['854.2nm'],
+    spec.ca_triplet_equivalent_widths['866.2nm']
     ]
     single_data.append(dict(zip(single_keys, single_values)))
 single_df = pd.DataFrame(single_data)
@@ -114,7 +114,10 @@ binary_keys = [
 	'rv_nb_transits',
     'single_fit_chisq', # oddball metrics
     'single_fit_training_density',
-    'single_fit_ca_resid'
+    'single_fit_ca_resid',
+    'eq_width_849.8nm', 
+    'eq_width_854.2nm',
+    'eq_width_866.2nm'
 	]
 
 binary_data = []
@@ -162,7 +165,10 @@ for source_id in binary_labels.source_id:
     row.rv_nb_transits,
     spec.single_fit_chisq,
     spec.single_fit_training_density,
-    spec.single_fit_ca_resid
+    spec.single_fit_ca_resid,
+    spec.ca_triplet_equivalent_widths['849.8nm'],
+    spec.ca_triplet_equivalent_widths['854.2nm'],
+    spec.ca_triplet_equivalent_widths['866.2nm']
     ]
     binary_data.append(dict(zip(binary_keys, binary_values)))
 binary_df = pd.DataFrame(binary_data)

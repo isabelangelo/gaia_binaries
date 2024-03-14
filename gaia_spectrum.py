@@ -220,7 +220,7 @@ class GaiaSpectrum(object):
         self.compute_oddball_metrics()
         resid = self.flux - self.single_fit
         ca_resid_bins = np.arange(1,6000,150)
-        ca_resid_str = r'$\chi_{Ca}^2$='+ str(np.round(self.single_fit_ca_resid,2))
+        ca_resid_str = r'$\chi_{Ca}^2$='+ str(int(self.single_fit_ca_resid))
 
         # compute rounded eq widths
         W1 = np.round(self.ca_triplet_equivalent_widths['849.8nm'],3)
@@ -230,7 +230,7 @@ class GaiaSpectrum(object):
         # create figure
         plt.rcParams['font.size']=15
         plt.rcParams['figure.dpi']=150
-        fig = plt.figure(figsize=(20,6))
+        fig = plt.figure(figsize=(21,6))
         gs = fig.add_gridspec(2, 4)
         plt.subplots_adjust(hspace=0)
 
@@ -238,7 +238,7 @@ class GaiaSpectrum(object):
         ax1.errorbar(custom_model.w, self.flux, yerr=self.sigma, color='k', 
                      ecolor='#E8E8E8', elinewidth=4, zorder=0)
         ax1.plot(custom_model.w, self.single_fit, color=single_fit_color, ls=(0,()), lw=2)
-        ax1.text(847,1.1,'best-fit single star\n$\chi^2={}$'.format(np.round(self.single_fit_chisq,2)),
+        ax1.text(847,1.1,'best-fit single star\n$\chi^2={}$'.format(int(self.single_fit_chisq)),
                      color=single_fit_color)
         ax1.text(859.7,1.15,'Gaia DR3 {}    S/N={}'.format(self.source_id, int(self.rvs_snr)), 
                  color='k', zorder=5)
@@ -262,7 +262,10 @@ class GaiaSpectrum(object):
         ax3.set_xlabel(r'Ca triplet $\chi^2$')
         ax3.set_ylabel('number of stars')
         ax3.axvline(self.single_fit_ca_resid, color=single_fit_color)
-        ax3.text(self.single_fit_ca_resid+300, 290, ca_resid_str, color=single_fit_color)
+        if self.single_fit_ca_resid<3000:
+            ax3.text(self.single_fit_ca_resid+300, 290, ca_resid_str, color=single_fit_color)
+        else:
+            ax3.text(self.single_fit_ca_resid-2300, 290, ca_resid_str, color=single_fit_color)
         ax3.text(2000, 10, 'single star sample', color='k')
         plt.show()
 
