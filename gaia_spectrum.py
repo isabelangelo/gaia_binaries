@@ -114,12 +114,31 @@ class GaiaSpectrum(object):
     
     # store relevant information for oddball detection
     def compute_oddball_metrics(self):
+        
         # compute training density of single star fit
         self.single_fit_training_density = custom_model.training_density(
             self.single_fit_labels)
+        
         # compute fractional calcium line residuals
         single_fit_ca_resid_arr = (self.flux - self.single_fit)/self.sigma
         self.single_fit_ca_resid = np.sum(single_fit_ca_resid_arr[custom_model.ca_mask]**2)
+        
+        # compute equivalent width of Ca triplet residuals
+        equivalent_width_values = []
+        for ca_idx in [custom_model.ca_idx1, custom_model.ca_idx2, custom_model.ca_idx3]:
+            # define wavelength, flux, continuum for integrand
+            line_w = custom_model.w[ca_idx]
+            line_continuum = np.ones(len(line_w)) 
+            line_resid = (self.flux[ca_idx] - self.single_fit[ca_idx]) + 1 # normalize to 1
+            line_integrand = 1 - line_resid/line_continuum
+
+            # compute equivalent width
+            equivalent_width = np.trapz(line_integrand, line_w)
+            equivalent_width_values.append(equivalent_width)
+        equivalent_width_keys = ['8498Å', '8542Å', '8662Å']
+        self.ca_triplet_equivalent_widths = dict(
+            zip(equivalent_width_keys, equivalent_width_values))
+
 
     # plot of data + model fits     
     def plot(self):
