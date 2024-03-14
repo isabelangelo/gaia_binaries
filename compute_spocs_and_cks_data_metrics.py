@@ -38,7 +38,10 @@ spocs_keys = [
 	'rv_nb_transits',
 	'single_fit_chisq', # oddball metrics
 	'single_fit_training_density', 
-	'single_fit_ca_resid'
+	'single_fit_ca_resid',
+    'eq_width_8498Å', 
+    'eq_width_8542Å',
+    'eq_width_8662Å'
 	]
 
 spocs_data = []
@@ -71,7 +74,10 @@ for source_id in spocs_labels.source_id:
     row.rv_nb_transits,
     spec.single_fit_chisq,
     spec.single_fit_training_density,
-    spec.single_fit_ca_resid
+    spec.single_fit_ca_resid,
+    spec.ca_triplet_equivalent_widths['8498Å'],
+    spec.ca_triplet_equivalent_widths['8542Å'],
+    spec.ca_triplet_equivalent_widths['8662Å']
     ]
     spocs_data.append(dict(zip(spocs_keys, spocs_values)))
 spocs_df = pd.DataFrame(spocs_data)
@@ -114,7 +120,10 @@ for source_id in cks_labels.source_id:
     row.rv_nb_transits,
     spec.single_fit_chisq,
     spec.single_fit_training_density,
-    spec.single_fit_ca_resid
+    spec.single_fit_ca_resid,
+    spec.ca_triplet_equivalent_widths['8498Å'],
+    spec.ca_triplet_equivalent_widths['8542Å'],
+    spec.ca_triplet_equivalent_widths['8662Å']
     ]
     cks_data.append(dict(zip(cks_keys, cks_values)))
 cks_df = pd.DataFrame(cks_data)
