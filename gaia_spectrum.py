@@ -12,11 +12,14 @@ import custom_model
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 # single stars for semi-empirical binaries
 single_labels = pd.read_csv('./data/label_dataframes/elbadry_singles_labels.csv')
 single_flux = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_flux.csv')
 single_sigma = pd.read_csv('./data/gaia_rvs_dataframes/elbadry_singles_sigma.csv')
+single_metrics = pd.read_csv('./data/oddball_and_binary_metric_dataframes/elbadry2018_singles_metrics.csv')
+
 
 # function to plot calcium mask
 def plot_calcium_mask(zorder_start, alpha_value=0.8):
@@ -135,7 +138,7 @@ class GaiaSpectrum(object):
             # compute equivalent width
             equivalent_width = np.trapz(line_integrand, line_w)
             equivalent_width_values.append(equivalent_width)
-        equivalent_width_keys = ['8498Å', '8542Å', '8662Å']
+        equivalent_width_keys = ['849.8nm', '854.2nm', '866.2nm']
         self.ca_triplet_equivalent_widths = dict(
             zip(equivalent_width_keys, equivalent_width_values))
 
@@ -155,8 +158,6 @@ class GaiaSpectrum(object):
 
         # plot figure
         plt.figure(figsize=(15,10))
-        plt.rcParams['font.size']=10
-
         plt.subplot(311);plt.xlim(custom_model.w.min(), custom_model.w.max())
         plt.text(863,1.05,'Gaia DR3 {}    S/N={}'.format(self.source_id, int(self.rvs_snr)), color='k', zorder=5)
         plt.errorbar(custom_model.w, self.flux, yerr=self.sigma, color='k', ecolor='#E8E8E8', elinewidth=4, zorder=0)
@@ -208,6 +209,64 @@ class GaiaSpectrum(object):
         plt.xlabel('wavelength (nm)')
         plt.tick_params(axis='x', direction='inout', length=15)
         plt.show()
+
+    def plot_activity(self):
+        """
+        This plots the full spectrum with the model fit
+        along with various activity-related metrics.
+        """
+        # relevant quantities for plot
+        single_fit_color='#DEB23C'
+        self.compute_oddball_metrics()
+        resid = self.flux - self.single_fit
+        ca_resid_bins = np.arange(1,6000,150)
+        ca_resid_str = r'$\chi_{Ca}^2$='+ str(np.round(self.single_fit_ca_resid,2))
+
+        # compute rounded eq widths
+        W1 = np.round(self.ca_triplet_equivalent_widths['849.8nm'],3)
+        W2 = np.round(self.ca_triplet_equivalent_widths['854.2nm'],3)
+        W3 = np.round(self.ca_triplet_equivalent_widths['866.2nm'],3)
+
+        # create figure
+        plt.rcParams['font.size']=15
+        plt.rcParams['figure.dpi']=150
+        fig = plt.figure(figsize=(20,6))
+        gs = fig.add_gridspec(2, 4)
+        plt.subplots_adjust(hspace=0)
+
+        ax1 = fig.add_subplot(gs[0:1, :3])
+        ax1.errorbar(custom_model.w, self.flux, yerr=self.sigma, color='k', 
+                     ecolor='#E8E8E8', elinewidth=4, zorder=0)
+        ax1.plot(custom_model.w, self.single_fit, color=single_fit_color, ls=(0,()), lw=2)
+        ax1.text(847,1.1,'best-fit single star\n$\chi^2={}$'.format(np.round(self.single_fit_chisq,2)),
+                     color=single_fit_color)
+        ax1.text(859.7,1.15,'Gaia DR3 {}    S/N={}'.format(self.source_id, int(self.rvs_snr)), 
+                 color='k', zorder=5)
+        ax1.set_ylabel('normalized\nflux')
+        ax1.set_ylim(0.2, 1.4)
+        ax1.set_xlim(custom_model.w.min(), custom_model.w.max())
+
+        ax2 = fig.add_subplot(gs[1:2, :3])
+        ax2.plot(custom_model.w, resid, color=single_fit_color, ls=(0,()), lw=2)
+        ax2.text(849.2, resid.min()-0.03, 'W={0:+}'.format(W1), color='k')
+        ax2.text(853.6, resid.min()-0.03, 'W={0:+}'.format(W2), color='k')
+        ax2.text(865.6, resid.min()-0.03, 'W={0:+}'.format(W3), color='k')
+        ax2.set_xlim(custom_model.w.min(), custom_model.w.max())
+        ax2.set_ylim(resid.min()-0.05, resid.max()+0.05)
+        ax2.tick_params(axis='x', direction='inout', length=15)
+        ax2.set_ylabel('residuals\n(data - model)')
+
+        ax3 = fig.add_subplot(gs[:, 3:])
+        ax3.hist(single_metrics.single_fit_ca_resid,
+             bins=ca_resid_bins, histtype='step', color='k')
+        ax3.set_xlabel(r'Ca triplet $\chi^2$')
+        ax3.set_ylabel('number of stars')
+        ax3.axvline(self.single_fit_ca_resid, color=single_fit_color)
+        ax3.text(self.single_fit_ca_resid+300, 290, ca_resid_str, color=single_fit_color)
+        ax3.text(2000, 10, 'single star sample', color='k')
+        plt.show()
+
+
 
 # spectrum object from semi-empirical binary
 # i.e., combined flux from two single stars

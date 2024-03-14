@@ -39,9 +39,9 @@ spocs_keys = [
 	'single_fit_chisq', # oddball metrics
 	'single_fit_training_density', 
 	'single_fit_ca_resid',
-    'eq_width_8498Å', 
-    'eq_width_8542Å',
-    'eq_width_8662Å'
+    'eq_width_849.8nm', 
+    'eq_width_854.2nm',
+    'eq_width_866.2nm'
 	]
 
 spocs_data = []

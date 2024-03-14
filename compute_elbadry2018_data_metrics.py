@@ -34,9 +34,9 @@ single_keys = [
     'single_fit_chisq', # oddball metrics
     'single_fit_training_density',
     'single_fit_ca_resid',
-    'eq_width_8498Å', 
-    'eq_width_8542Å',
-    'eq_width_8662Å'
+    'eq_width_849.8nm', 
+    'eq_width_854.2nm',
+    'eq_width_866.2nm'
 	]
 
 single_data = []
@@ -78,7 +78,7 @@ for source_id in gaia_spectrum.single_labels.source_id:
     single_data.append(dict(zip(single_keys, single_values)))
 single_df = pd.DataFrame(single_data)
 # save data to file
-single_df_filename = './data/oddball_and_binary_metric_dataframes/elbadry2018_single_metrics.csv'
+single_df_filename = './data/oddball_and_binary_metric_dataframes/elbadry2018_singles_metrics.csv'
 single_df.to_csv(single_df_filename)
 print('binary detection stats for single stars from El-Badry 2018 saved to {}'.format(
 	single_df_filename))
